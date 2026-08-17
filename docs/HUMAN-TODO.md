@@ -4,34 +4,32 @@ The app already turns a Stripe receipt into a cash line and tells you which numb
 
 ## This week (you)
 
-1. **Domain**  
-   Pick a host for addresses like `ab12cd34ef@inbox.yourdomain.com`.  
-   Set Vercel `INBOX_DOMAIN` to that host. It must match the address shown in `/app`.
+Done in Vercel (do not redo): Neon `aibill-db`, `INBOX_DOMAIN=inbox.1024ideas.com`, `INBOX_WEBHOOK_SECRET`, `EMAIL_FROM=AI Bill <noreply@1024ideas.com>`, Resend resource `aibill-mail` (free, still **Onboarding** until DNS verifies).
 
-2. **Inbound provider**  
-   Create **Mailgun Inbound** (preferred) or Postmark Inbound.  
-   Resend inbound is only OK if the webhook body includes the email text.
+1. **Verify sending domain** (Namecheap DNS for `1024ideas.com`)  
+   Open the Resend resource (Vercel → Storage → `aibill-mail`, or the SSO link from `vercel integration open resend aibill-mail`).  
+   Add the DKIM / SPF / MX records Resend shows. Do **not** replace the root MX if you already receive mail at `@1024ideas.com` — only add the records Resend lists (usually on `send` / `_domainkey`).  
+   Wait until the resource status is Available.
 
-3. **MX**  
-   Point the inbox subdomain at the provider’s inbound MX. Wait for DNS.
+2. **Inbound MX**  
+   Keep receiving on the subdomain only:  
+   `inbox.1024ideas.com` → provider inbound MX (Resend receiving MX from that same dashboard, or Mailgun inbound if you prefer).  
+   Do not point the root domain MX here.
 
-4. **Webhook**  
-   Route inbound mail to `POST https://<production-host>/api/inbox`.  
-   Mailgun: inbound parse. Fields we read: `recipient`, `from`, `subject`, `body-plain`, `Message-Id`.  
-   Postmark: `To`, `From`, `Subject`, `TextBody`, `MessageID`.
+3. **Webhook**  
+   Route inbound mail to  
+   `POST https://aibill.1024ideas.com/api/inbox?secret=<INBOX_WEBHOOK_SECRET>`  
+   (same secret is also accepted as header `x-inbox-secret` or `Authorization: Bearer …`).  
+   Mailgun fields: `recipient`, `from`, `subject`, `body-plain`, `Message-Id`.  
+   Resend JSON `email.received` is already parsed.
 
-5. **Secret**  
-   Set `INBOX_WEBHOOK_SECRET` to a long random string.  
-   Send it as header `x-inbox-secret`.  
-   On Vercel, inbound is rejected if this is missing.
-
-6. **Smoke**  
-   Sign in on production → copy the address → “Drop a test Windsurf receipt”.  
+4. **Smoke**  
+   Sign in on https://aibill.1024ideas.com → copy the address → “Drop a test Windsurf receipt”.  
    Then forward one real Stripe Cursor or Claude receipt.  
    Expect a line with source **Forwarded**, and the month total to move.  
    Forward the same email again: total must not double.
 
-7. **Your own Gmail (once)**  
+5. **Your own Gmail (once)**  
    Settings → Filters → the query on the bill page → Forward to your AI Bill address.  
    Or set that address as the billing email on Cursor / Claude / ChatGPT / Windsurf.
 
