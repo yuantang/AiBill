@@ -630,6 +630,14 @@ export function BillApp() {
             ) : null}
           </div>
         </details>
+        {bill.mode === "cloud" && !showConnect ? (
+          <p className="hint" style={{ marginTop: 12 }}>
+            {t("bill.keysTeaser")}{" "}
+            <button type="button" className="link" onClick={openKeys}>
+              {t("bill.keysTeaserCta")}
+            </button>
+          </p>
+        ) : null}
       </section>
 
       {showConnect ? (

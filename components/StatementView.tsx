@@ -27,6 +27,7 @@ export function StatementView() {
   const [error, setError] = useState<string | null>(null);
   const sums = subtotals(ledger.lines);
   const text = statementText(ledger, new Date(), locale);
+  const canSend = ledger.totalCny > 0;
 
   async function copy() {
     try {
@@ -85,7 +86,12 @@ export function StatementView() {
           <h1>{t("statement.title")}</h1>
         </div>
         <div className="top-actions">
-          <button type="button" className="btn" onClick={() => void copy()}>
+          {!canSend ? (
+            <p className="hint" role="status">
+              {t("statement.empty")}
+            </p>
+          ) : null}
+          <button type="button" className="btn" disabled={!canSend} onClick={() => void copy()}>
             {copied ? t("statement.copied") : t("statement.copy")}
           </button>
           <button type="button" className="btn secondary" onClick={() => window.print()}>
@@ -139,7 +145,7 @@ export function StatementView() {
           >
             {t("statement.expense")}
           </button>
-          <button type="button" className="btn secondary" onClick={() => void share()}>
+          <button type="button" className="btn secondary" disabled={!canSend} onClick={() => void share()}>
             {shareUrl ? t("statement.shareCopied") : t("statement.share")}
           </button>
           {mode === "cloud" ? (

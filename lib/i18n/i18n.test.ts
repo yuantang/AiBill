@@ -44,6 +44,13 @@ describe("i18n", () => {
     expect(t("zh", "inbox.rail.unverifiedBody")).toContain("没有账单邮箱栏");
   });
 
+  it("empty-month and filter-set copy stay paste-first", () => {
+    expect(t("en", "inbox.rail.filterSet").toLowerCase()).toMatch(/filter|forward|paste/);
+    expect(t("zh", "inbox.rail.filterSet")).toMatch(/过滤|转发|贴/);
+    expect(t("en", "bill.keysTeaser")).toMatch(/Admin Key|invoice/i);
+    expect(t("en", "statement.empty")).toMatch(/no cash total/i);
+  });
+
   it("interpolates placeholders", () => {
     expect(t("en", "bill.signedIn", { email: "a@b.com" })).toContain("a@b.com");
     expect(t("zh", "bill.kicker", { month: "2026-08" })).toContain("2026-08");

@@ -285,45 +285,51 @@ export function InboxCard({
       {status === "filter_ready" ? (
         <>
           <h3 className="setup-h">{t("inbox.rail.filterTitle")}</h3>
-          <p className="hint">{t("inbox.rail.filterBody")}</p>
-          <a className="btn" href={GMAIL_FILTERS_URL} target="_blank" rel="noopener noreferrer">
-            {t("inbox.guide.openGmail")}
-          </a>
-          {cursor ? (
-            <table className="setup-table">
-              <tbody>
-                <tr>
-                  <th>{t("inbox.guide.from")}</th>
-                  <td>
-                    <code>{cursor.from}</code>
-                    <button type="button" className="link" onClick={() => void copy("from", cursor.from)}>
-                      {copied === "from" ? t("inbox.copied") : t("inbox.copy")}
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <th>{t("inbox.guide.contains")}</th>
-                  <td>
-                    <code>{cursor.contains}</code>
-                    <button type="button" className="link" onClick={() => void copy("has", cursor.contains)}>
-                      {copied === "has" ? t("inbox.copied") : t("inbox.copy")}
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <th>{t("inbox.guide.leave")}</th>
-                  <td>{t("inbox.guide.leaveVal")}</td>
-                </tr>
-              </tbody>
-            </table>
-          ) : null}
-          <p className="hint">{t("inbox.rail.filterNext")}</p>
-          <p className="hint">{t("inbox.rail.filterOthers")}</p>
+          <p className="ok" role="status">
+            {t("inbox.rail.filterSet")}
+          </p>
           {info.waiting && info.waiting.length > 0 ? (
             <p className="hint">{t("inbox.stillWaiting", { names: info.waiting.join(", ") })}</p>
           ) : (
             <p className="hint">{t("inbox.seatsIn")}</p>
           )}
+          <details className="inbox-more">
+            <summary>{t("inbox.guide.openGmail")}</summary>
+            <p className="hint">{t("inbox.rail.filterBody")}</p>
+            <a className="btn" href={GMAIL_FILTERS_URL} target="_blank" rel="noopener noreferrer">
+              {t("inbox.guide.openGmail")}
+            </a>
+            {cursor ? (
+              <table className="setup-table">
+                <tbody>
+                  <tr>
+                    <th>{t("inbox.guide.from")}</th>
+                    <td>
+                      <code>{cursor.from}</code>
+                      <button type="button" className="link" onClick={() => void copy("from", cursor.from)}>
+                        {copied === "from" ? t("inbox.copied") : t("inbox.copy")}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>{t("inbox.guide.contains")}</th>
+                    <td>
+                      <code>{cursor.contains}</code>
+                      <button type="button" className="link" onClick={() => void copy("has", cursor.contains)}>
+                        {copied === "has" ? t("inbox.copied") : t("inbox.copy")}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>{t("inbox.guide.leave")}</th>
+                    <td>{t("inbox.guide.leaveVal")}</td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : null}
+            <p className="hint">{t("inbox.rail.filterNext")}</p>
+            <p className="hint">{t("inbox.rail.filterOthers")}</p>
+          </details>
         </>
       ) : null}
 

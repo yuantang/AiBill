@@ -13,10 +13,11 @@ function line(partial: Partial<Line> & Pick<Line, "id" | "name">): Line {
 }
 
 describe("nextAction", () => {
-  it("refuses to send an empty total", () => {
+  it("refuses to send an empty total and points at paste", () => {
     const action = nextAction([], 0);
     expect(action.id).toBe("empty");
     expect(action.href).toBe("#inbox");
+    expect(action.body.toLowerCase()).toMatch(/paste|贴/);
   });
 
   it("asks to drop a second IDE before sending", () => {
@@ -32,10 +33,10 @@ describe("nextAction", () => {
     expect(action.title).toMatch(/2 coding seats|2 个/);
   });
 
-  it("names a missing core seat", () => {
+  it("sends a one-seat bill instead of blocking on missing Claude or ChatGPT", () => {
     const action = nextAction([line({ id: "c", name: "Cursor Pro" })], 20);
-    expect(action.id).toBe("missing");
-    expect(action.title).toMatch(/Claude|ChatGPT|Windsurf/);
+    expect(action.id).toBe("send");
+    expect(action.href).toBe("/app/statement");
   });
 
   it("sends the cash total when the stack is complete and not doubled", () => {

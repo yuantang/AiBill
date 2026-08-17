@@ -1,4 +1,3 @@
-import { waitingSeats } from "./coverage";
 import { formatCny } from "./ledger";
 import { findOverlaps } from "./stack";
 import type { Locale } from "./i18n/locales";
@@ -23,8 +22,8 @@ export function nextAction(lines: Line[], totalCny: number, locale: Locale = "en
       title: locale === "zh" ? "这个月还是空的" : "This month is still empty",
       body:
         locale === "zh"
-          ? "卡上已经扣过的，点选 Claude / Cursor / ChatGPT。或者看三封收据自己进来。空合计发不出去。"
-          : "Tap Claude / Cursor / ChatGPT if the card already charged. Or watch three receipts land. An empty total is not a number you can send.",
+          ? "这个月已经扣过的，在下面贴收据；或者等下一次转发进来。空合计发不出去。"
+          : "Paste this month’s receipts below, or wait for the next forwarded charge. An empty total is not a number you can send.",
       href: "#inbox",
       cta: locale === "zh" ? "去入账" : "Get charges in",
     };
@@ -44,20 +43,6 @@ export function nextAction(lines: Line[], totalCny: number, locale: Locale = "en
       href: "/app/forecast",
       cta: locale === "zh" ? "看取消哪个" : "See what to drop",
       saveCny: overlap.amountCny,
-    };
-  }
-
-  const missing = waitingSeats(cash);
-  if (missing.length > 0) {
-    return {
-      id: "missing",
-      title: locale === "zh" ? `还缺 ${missing.join("、")}` : `Still missing ${missing.join(", ")}`,
-      body:
-        locale === "zh"
-          ? "合计里没有这些席位。转发收据，或在下面点选已经扣过的。缺一行，发出去的数就不对。"
-          : "Those seats are not in the total. Forward the receipt, or tap a plan the card already charged. A missing line is a number you cannot stand behind.",
-      href: "#inbox",
-      cta: locale === "zh" ? "补上收据" : "Add the receipt",
     };
   }
 
