@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseReceipts } from "./receipts";
 import { waitingSeats } from "./coverage";
 import {
+  hydrateResendReceived,
   inboxAddress,
   inboundAuthorized,
   inboundDedupeKey,
@@ -73,6 +74,42 @@ describe("inbound payloads", () => {
     });
     expect(mail.token).toBe("ab12cd34ef");
     expect(parseReceipts(mail.text, new Date("2026-08-16T19:00:00Z"))[0]?.name).toBe("Claude Max");
+  });
+
+  it("fetches the body when Resend only sends email.received metadata", async () => {
+    const prev = process.env.RESEND_API_KEY;
+    process.env.RESEND_API_KEY = "re_test";
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        to: ["ab12cd34ef@inbox.aibill.dev"],
+        from: "Stripe <receipts@stripe.com>",
+        subject: "Receipt from Cursor",
+        text: "Receipt from Cursor\nAmount paid $20.00\nAugust 8, 2026",
+        message_id: "<abc@stripe.com>",
+      }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const meta = mailFromObject({
+        type: "email.received",
+        data: { email_id: "em_123", to: ["ab12cd34ef@inbox.aibill.dev"], subject: "Receipt from Cursor" },
+      });
+      expect(parseReceipts(meta.text, new Date("2026-08-16T19:00:00Z"))).toEqual([]);
+      const mail = await hydrateResendReceived(meta, {
+        type: "email.received",
+        data: { email_id: "em_123", to: ["ab12cd34ef@inbox.aibill.dev"], subject: "Receipt from Cursor" },
+      });
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.resend.com/emails/receiving/em_123",
+        expect.objectContaining({ headers: { Authorization: "Bearer re_test" } }),
+      );
+      expect(parseReceipts(mail.text, new Date("2026-08-16T19:00:00Z"))[0]?.name).toBe("Cursor Pro");
+    } finally {
+      vi.unstubAllGlobals();
+      if (prev === undefined) delete process.env.RESEND_API_KEY;
+      else process.env.RESEND_API_KEY = prev;
+    }
   });
 
   it("keys repeats of the same Message-Id together", () => {

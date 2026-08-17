@@ -120,11 +120,32 @@ export function inboundDedupeKey(mail: InboundMail): string {
     .digest("hex");
 }
 
+export async function hydrateResendReceived(
+  mail: InboundMail,
+  raw: Record<string, unknown>,
+): Promise<InboundMail> {
+  const type = asString(raw.type);
+  const data =
+    raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+      ? (raw.data as Record<string, unknown>)
+      : raw;
+  const emailId = asString(data.email_id);
+  if (type !== "email.received" || !emailId) return mail;
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (!key) return mail;
+  const res = await fetch(`https://api.resend.com/emails/receiving/${encodeURIComponent(emailId)}`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  if (!res.ok) return mail;
+  const full = (await res.json()) as Record<string, unknown>;
+  return mailFromObject({ ...data, ...full });
+}
+
 export async function parseInboundRequest(request: Request): Promise<InboundMail> {
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
     const json = (await request.json()) as Record<string, unknown>;
-    return mailFromObject(json ?? {});
+    return hydrateResendReceived(mailFromObject(json ?? {}), json ?? {});
   }
   if (contentType.includes("form")) {
     const form = await request.formData();
@@ -137,7 +158,8 @@ export async function parseInboundRequest(request: Request): Promise<InboundMail
   const text = await request.text();
   if (!text.trim()) return mailFromObject({});
   try {
-    return mailFromObject(JSON.parse(text) as Record<string, unknown>);
+    const json = JSON.parse(text) as Record<string, unknown>;
+    return hydrateResendReceived(mailFromObject(json), json);
   } catch {
     return mailFromObject({ text });
   }
