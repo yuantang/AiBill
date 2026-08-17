@@ -201,7 +201,9 @@ export const zh = {
       filterOthers: "Claude 同样过滤，包含字词改成 Claude。ChatGPT 改成 OpenAI。可选。",
       doneTitle: "转发已经接通",
       doneBody: "已经有一封真实收据进来。之后的扣款会走同一条过滤。",
-      filterSet: "过滤已设好。下次 Cursor 扣款会自己进来。这个月已经扣过的，在下面贴收据。",
+      filterSet: "过滤已设好。下次 Cursor 扣款会自己进来。",
+      forwardNow:
+        "这个月已经扣过？在 Gmail 打开那封 Stripe 收据 → 转发 → 寄到上面的地址。或者把同一段文字贴在下面。不用等下个月。",
     },
     ackFail: "确认没能保存",
     acked: "已记下。下一步建过滤。",

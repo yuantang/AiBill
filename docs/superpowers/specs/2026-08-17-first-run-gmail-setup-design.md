@@ -16,7 +16,7 @@ Gmail OAuth, Stripe $5 for AI Bill, Plaid, Cursor/Claude/ChatGPT “billing emai
 - Cursor has no billing-email box. Stripe’s customer portal does not let the customer change email on the no-code login link.
 - Claude / ChatGPT receipts follow the **account** email. First-run does not teach those dashboards.
 - Gmail will not offer “Forward it to” until the address is verified.
-- Google sends the confirmation **to `token@inbox.1024ideas.com`**, not to the user’s Gmail.
+- Google sends the confirmation **to `token@1024ideas.com`**, not to the user’s Gmail. (`inbox.` still parses during cutover.)
 - Filter-forwarded Stripe mail arrives **From the user**; the original Stripe headers are in the body.
 - Filters apply to **new** mail only.
 

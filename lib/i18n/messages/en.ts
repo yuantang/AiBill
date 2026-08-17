@@ -205,7 +205,9 @@ export const en = {
       filterOthers: "Claude is the same filter with words = Claude. ChatGPT = OpenAI. Optional.",
       doneTitle: "Forwarding is live",
       doneBody: "A real receipt landed. Later charges will follow the same filter.",
-      filterSet: "Filter is set. The next Cursor charge will land here. This month: paste below.",
+      filterSet: "Filter is set. The next Cursor charge will land here.",
+      forwardNow:
+        "Already charged this month? In Gmail open that Stripe receipt → Forward → send it to the address above. Or paste the same text below. Do not wait for next month.",
     },
     ackFail: "Could not save confirmation",
     acked: "Saved. Create the filter next.",

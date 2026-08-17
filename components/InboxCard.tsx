@@ -288,6 +288,7 @@ export function InboxCard({
           <p className="ok" role="status">
             {t("inbox.rail.filterSet")}
           </p>
+          <p className="hint">{t("inbox.rail.forwardNow")}</p>
           {info.waiting && info.waiting.length > 0 ? (
             <p className="hint">{t("inbox.stillWaiting", { names: info.waiting.join(", ") })}</p>
           ) : (

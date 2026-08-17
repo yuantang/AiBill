@@ -45,8 +45,10 @@ describe("i18n", () => {
   });
 
   it("empty-month and filter-set copy stay paste-first", () => {
-    expect(t("en", "inbox.rail.filterSet").toLowerCase()).toMatch(/filter|forward|paste/);
-    expect(t("zh", "inbox.rail.filterSet")).toMatch(/过滤|转发|贴/);
+    expect(t("en", "inbox.rail.filterSet").toLowerCase()).toMatch(/filter|forward/);
+    expect(t("zh", "inbox.rail.filterSet")).toMatch(/过滤|转发/);
+    expect(t("en", "inbox.rail.forwardNow").toLowerCase()).toMatch(/forward|paste/);
+    expect(t("zh", "inbox.rail.forwardNow")).toMatch(/转发|贴/);
     expect(t("en", "bill.keysTeaser")).toMatch(/Admin Key|invoice/i);
     expect(t("en", "statement.empty")).toMatch(/no cash total/i);
   });

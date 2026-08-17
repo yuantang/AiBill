@@ -1,65 +1,27 @@
-# Human todo — make AI Bill receive real mail and stay useful
+# Human todo — operator of AI Bill
 
-The app already turns a Stripe receipt into a cash line and tells you which number to send. It cannot receive live email until a person does the work below. Do these in order. Do not start Stripe or Gmail OAuth until 1–6 work.
+Mail, DNS, and first-run Gmail are live. Do not rebuild them. Do not start Stripe or Gmail OAuth until a real forwarded receipt has moved the total.
 
-## This week (you)
+## Done (do not redo)
 
-Done in Vercel (do not redo): Neon `aibill-db`, `INBOX_DOMAIN=1024ideas.com`, `INBOX_WEBHOOK_SECRET`, `EMAIL_FROM=AI Bill <noreply@1024ideas.com>`, Resend sending on `1024ideas.com` (DKIM/SPF verified). Webhook `email.received` → `/api/inbox`. Free plan is **one** Resend domain, so receiving cannot live on a second host.
+- Neon `aibill-db`, Vercel `aibill`, domain `aibill.1024ideas.com`
+- `INBOX_DOMAIN=1024ideas.com`, receiving MX on apex `@` → `inbound-smtp.us-east-1.amazonaws.com`
+- Resend sending + receiving **verified**; webhook `email.received` → `/api/inbox`
+- First account: forwarding address confirmed, Cursor filter can be created
+- Product: exclusive Gmail rail, paste-this-month, send any positive cash total, Admin Keys, statement
 
-1. **Verify sending domain** — done. DKIM + `send` SPF/MX are verified.
+## This week (you — one action)
 
-2. **Inbound MX (blocking)**  
-   Resend receiving is enabled on the **apex** `1024ideas.com`, not `inbox.1024ideas.com`. A probe to `token@inbox.1024ideas.com` was accepted by SES and never appeared in Resend Receiving.  
-   Namecheap → Domain → Advanced DNS → Mail Settings = Custom MX. Add **one** record:
+**Forward or paste one real Stripe receipt from this month** (Cursor, Claude, or ChatGPT) to the address shown on `/app`, or paste the email text there.
 
-   | Type | Host | Value | Priority |
-   |------|------|-------|----------|
-   | MX | `@` | `inbound-smtp.us-east-1.amazonaws.com` | 10 |
+Expect a line with source **Forwarded** (or pasted), and the month total to move. Forward the same mail again: total must not double.
 
-   Root MX is currently empty, so this does not steal an existing mailbox.  
-   Then wait until the Receiving row in Resend is **verified**. Addresses become `token@1024ideas.com`.
+Optional: paste a read-only OpenAI / Anthropic Admin Key for the two invoices that exist.
 
-3. **Webhook**  
-   Route inbound mail to  
-   `POST https://aibill.1024ideas.com/api/inbox?secret=<INBOX_WEBHOOK_SECRET>`  
-   (same secret is also accepted as header `x-inbox-secret` or `Authorization: Bearer …`).  
-   Mailgun fields: `recipient`, `from`, `subject`, `body-plain`, `Message-Id`.  
-   Resend JSON `email.received` is already parsed.
+Then open the statement and send the number if it matches the card.
 
-4. **Smoke**  
-   Sign in on https://aibill.1024ideas.com → copy the address → “Drop a test Windsurf receipt”.  
-   Then forward one real Stripe Cursor or Claude receipt.  
-   Expect a line with source **Forwarded**, and the month total to move.  
-   Forward the same email again: total must not double.
+## Later (only after that receipt lands)
 
-5. **Your own Gmail (once)**  
-   Settings → **Forwarding and POP/IMAP** (`#settings/fwdandpop`) → add the AI Bill address.  
-   Google’s confirmation mail goes to that address, **not** your Gmail. Confirm the code/link on `/app`, then click “I confirmed in Gmail.”  
-   Only after that: Settings → Filters → From `stripe.com`, Has the words `Cursor` → next screen only **Forward it to**. Do not apply to matching conversations.  
-   Cursor has no billing-email box. Do not teach users to change email on Stripe’s customer portal.
-
-## Already done in the app (do not rebuild)
-
-- Unique per-user inbox token and address  
-- Receipt parser (Stripe text, bank CSV)  
-- Other-month dates stay out of this month  
-- Same Message-Id processed once  
-- Hand / paste / forward of the same seat is one cash line  
-- OpenAI / Anthropic Admin Key invoices  
-- One number to send, overlap (“paying two IDEs”), Monday letter, share link  
-- Demo: `/app?demo=1` → “Watch three receipts land”
-
-## Later (only after mail works)
-
-- Stripe Checkout for AI Bill itself ($5 / $48)  
-- Gmail OAuth so users skip the filter  
-- Plaid / bank feed  
-- Extra vendor cost APIs (OpenRouter has no monthly invoice)
-
-## How you know the product is solving the pain
-
-A user who pays Claude + Cursor + ChatGPT + an OpenAI invoice should:
-
-1. Open `/app` and see **one USD total** that matches the card, not ccusage.  
-2. See **one next action**: send that number, cancel a duplicate seat, or add a missing receipt.  
-3. After setup, **not paste every month**.
+- Stripe Checkout for AI Bill itself ($5 / $48)
+- Gmail OAuth so new users skip the filter
+- Plaid / bank feed

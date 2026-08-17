@@ -583,7 +583,7 @@ export function BillApp() {
         <h2>{t("bill.allTitle")}</h2>
         <p className="hint">{t("bill.allHint")}</p>
         <InboxCard mode={bill.mode} onLines={(next) => next.forEach((line) => bill.putLine(line))} />
-        <details className="inbox-paste">
+        <details className="inbox-paste" open={empty}>
           <summary>{t("bill.allPaste")}</summary>
           <div className="field" style={{ marginTop: 12 }}>
             <label htmlFor="receipts">{t("bill.allPaste")}</label>
