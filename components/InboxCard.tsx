@@ -64,16 +64,6 @@ export function InboxCard({
     }
   }
 
-  async function openSeat(href: string, name: string) {
-    if (!info) return;
-    const ok = await copy("addr", info.address);
-    if (ok) {
-      setNoteKind("ok");
-      setNote(t("inbox.copiedGo", { name }));
-    }
-    window.open(href, "_blank", "noopener,noreferrer");
-  }
-
   function landDemo() {
     const lines = sampleInboundLines();
     onLines?.(lines);
@@ -168,9 +158,20 @@ export function InboxCard({
       <p className="hint">{t("inbox.vendorHint")}</p>
       <div className="vendor-row" role="group" aria-label={t("inbox.vendorHint")}>
         {BILLING_SEATS.map((seat) => (
-          <button key={seat.id} type="button" className="btn secondary" onClick={() => void openSeat(seat.href, seat.name)}>
+          <a
+            key={seat.id}
+            className="btn secondary"
+            href={seat.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              void copy("addr", info.address);
+              setNoteKind("ok");
+              setNote(t("inbox.copiedGo", { name: seat.name }));
+            }}
+          >
             {t("inbox.openVendor", { name: seat.name })}
-          </button>
+          </a>
         ))}
       </div>
       {info.lastInboxAt ? (
