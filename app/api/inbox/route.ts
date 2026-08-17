@@ -49,8 +49,7 @@ async function inboxPayload(userId: string, token: string, lastInboxAt: Date | n
     waiting,
     setup: [
       "Copy the address.",
-      "Gmail → Settings → Filters → Create a filter with the query below → Forward to this address.",
-      "Or set this address as the billing email on Cursor / Claude / ChatGPT / Windsurf.",
+      "Set it as the billing email on Cursor, Claude, and ChatGPT.",
     ],
   };
 }

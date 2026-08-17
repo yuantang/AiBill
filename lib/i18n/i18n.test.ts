@@ -12,6 +12,8 @@ describe("i18n", () => {
     expect(t("zh", "bill.title")).toBe("你真正付出去的");
     expect(t("en", "bill.sendNumber")).toBe("Send this number");
     expect(t("zh", "bill.invoicesTitle")).toContain("发票");
+    expect(t("zh", "inbox.oneStep")).toContain("账单邮箱");
+    expect(t("en", "inbox.openVendor", { name: "Cursor" })).toBe("Set on Cursor");
   });
 
   it("interpolates placeholders", () => {

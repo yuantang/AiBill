@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sampleInboundLines } from "@/lib/inbox-sample";
 import type { Line } from "@/lib/types";
+import { BILLING_SEATS } from "@/lib/vendors";
 import { useI18n } from "./I18nProvider";
 
 type InboxInfo = {
@@ -10,7 +11,6 @@ type InboxInfo = {
   lastInboxAt: string | null;
   filter: string;
   waiting?: string[];
-  setup: string[];
 };
 
 export function InboxCard({
@@ -56,10 +56,22 @@ export function InboxCard({
       setCopied(kind);
       if (copyTimer.current != null) window.clearTimeout(copyTimer.current);
       copyTimer.current = window.setTimeout(() => setCopied(null), 1600);
+      return true;
     } catch {
       setNoteKind("err");
       setNote(t("inbox.copyFail"));
+      return false;
     }
+  }
+
+  async function openSeat(href: string, name: string) {
+    if (!info) return;
+    const ok = await copy("addr", info.address);
+    if (ok) {
+      setNoteKind("ok");
+      setNote(t("inbox.copiedGo", { name }));
+    }
+    window.open(href, "_blank", "noopener,noreferrer");
   }
 
   function landDemo() {
@@ -110,7 +122,9 @@ export function InboxCard({
   if (mode !== "cloud") {
     return (
       <div className="inbox-card">
-        <p className="hint">{t("inbox.signIn")}</p>
+        <p className="lede" style={{ marginTop: 0 }}>
+          {t("inbox.oneStepGuest")}
+        </p>
         <div className="actions">
           <a className="btn" href="/login">
             {t("nav.signIn")}
@@ -142,15 +156,27 @@ export function InboxCard({
 
   return (
     <div className="inbox-card">
-      <p className="hint">{t("inbox.hint")}</p>
+      <p className="lede" style={{ marginTop: 0 }}>
+        {t("inbox.oneStep")}
+      </p>
       <div className="inbox-addr">
         <code>{info.address}</code>
-        <button type="button" className="link" onClick={() => void copy("addr", info.address)}>
+        <button type="button" className="btn" onClick={() => void copy("addr", info.address)}>
           {copied === "addr" ? t("inbox.copied") : t("inbox.copy")}
         </button>
       </div>
+      <p className="hint">{t("inbox.vendorHint")}</p>
+      <div className="vendor-row" role="group" aria-label={t("inbox.vendorHint")}>
+        {BILLING_SEATS.map((seat) => (
+          <button key={seat.id} type="button" className="btn secondary" onClick={() => void openSeat(seat.href, seat.name)}>
+            {t("inbox.openVendor", { name: seat.name })}
+          </button>
+        ))}
+      </div>
       {info.lastInboxAt ? (
-        <p className="hint">{t("inbox.lastAt", { date: new Date(info.lastInboxAt).toLocaleString() })}</p>
+        <p className="ok" role="status">
+          {t("inbox.lastAt", { date: new Date(info.lastInboxAt).toLocaleString() })}
+        </p>
       ) : (
         <p className="hint">{t("inbox.waiting")}</p>
       )}
@@ -159,25 +185,24 @@ export function InboxCard({
       ) : (
         <p className="hint">{t("inbox.seatsIn")}</p>
       )}
-      <ol className="inbox-steps">
-        <li>{t("inbox.stepFilter")}</li>
-        <li>{t("inbox.stepBilling")}</li>
-        <li>{t("inbox.stepDone")}</li>
-      </ol>
-      <div className="inbox-filter">
-        <code>{info.filter}</code>
-        <button type="button" className="link" onClick={() => void copy("filter", info.filter)}>
-          {copied === "filter" ? t("inbox.copied") : t("inbox.copyFilter")}
-        </button>
-      </div>
-      <div className="actions">
-        <button type="button" className="btn" disabled={busy != null} onClick={() => void sendTest()}>
-          {busy === "test" ? t("inbox.testing") : t("inbox.test")}
-        </button>
-        <button type="button" className="btn secondary" disabled={busy != null} onClick={() => void rotate()}>
-          {t("inbox.rotate")}
-        </button>
-      </div>
+      <details className="inbox-more">
+        <summary>{t("inbox.more")}</summary>
+        <p className="hint">{t("inbox.moreFilter")}</p>
+        <div className="inbox-filter">
+          <code>{info.filter}</code>
+          <button type="button" className="link" onClick={() => void copy("filter", info.filter)}>
+            {copied === "filter" ? t("inbox.copied") : t("inbox.copyFilter")}
+          </button>
+        </div>
+        <div className="actions" style={{ marginTop: 10 }}>
+          <button type="button" className="btn secondary" disabled={busy != null} onClick={() => void sendTest()}>
+            {busy === "test" ? t("inbox.testing") : t("inbox.test")}
+          </button>
+          <button type="button" className="btn ghost" disabled={busy != null} onClick={() => void rotate()}>
+            {t("inbox.rotate")}
+          </button>
+        </div>
+      </details>
       {note ? (
         <p className={noteKind === "err" ? "error" : "ok"} role={noteKind === "err" ? "alert" : "status"}>
           {note}
