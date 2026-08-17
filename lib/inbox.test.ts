@@ -5,6 +5,7 @@ import {
   gmailForwardConfirm,
   hydrateResendReceived,
   inboxAddress,
+  inboxStatus,
   inboundAllowed,
   inboundAuthorized,
   inboundDedupeKey,
@@ -69,6 +70,28 @@ describe("inbox addressing", () => {
 
   it("formats the public address", () => {
     expect(inboxAddress("ab12cd34ef")).toMatch(/^ab12cd34ef@/);
+  });
+
+  it("derives exclusive setup status without treating confirm as a receipt", () => {
+    expect(inboxStatus({})).toBe("unverified");
+    expect(inboxStatus({ confirmReceivedAt: new Date() })).toBe("confirm_received");
+    expect(inboxStatus({ confirmReceivedAt: new Date(), forwardingAckedAt: new Date() })).toBe("filter_ready");
+    expect(
+      inboxStatus({
+        confirmReceivedAt: new Date(),
+        forwardingAckedAt: new Date(),
+        lastReceiptAt: new Date(),
+      }),
+    ).toBe("first_receipt");
+    expect(inboxStatus({ lastReceiptAt: new Date() })).toBe("first_receipt");
+  });
+
+  it("treats a Gmail confirm as allowed inbound that is not a cash receipt", () => {
+    const blob =
+      "From: forwarding-noreply@google.com\nGmail Forwarding Confirmation\nConfirmation code: 847291036";
+    expect(inboundAllowed({ from: "forwarding-noreply@google.com", text: blob })).toBe(true);
+    expect(gmailForwardConfirm(blob)?.code).toBe("847291036");
+    expect(parseReceipts(blob)).toEqual([]);
   });
 });
 

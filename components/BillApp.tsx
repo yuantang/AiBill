@@ -721,7 +721,10 @@ export function BillApp() {
       ) : null}
 
       {empty ? (
-        <Onboarding onDone={finishOnboarding} onDemo={applyDemo} />
+        <details className="inbox-more">
+          <summary>{t("onboard.tapNow")}</summary>
+          <Onboarding onDone={finishOnboarding} onDemo={applyDemo} />
+        </details>
       ) : (
         <div className="card-row">
           <section className="panel">

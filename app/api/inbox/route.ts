@@ -3,77 +3,98 @@ import { requireUser } from "@/lib/current-user";
 import { prisma } from "@/lib/db";
 import { waitingSeats } from "@/lib/coverage";
 import {
-  gmailFilterQuery,
   gmailForwardConfirm,
   inboxAddress,
+  inboxStatus,
   inboundAllowed,
   inboundAuthorized,
   inboundDedupeKey,
   newInboxToken,
   parseInboundRequest,
 } from "@/lib/inbox";
+import { BILLING_SEATS } from "@/lib/vendors";
 import { toLine } from "@/lib/lines";
 import { looksLikeReceipt, parseReceipts } from "@/lib/receipts";
 import { saveReceiptLines } from "@/lib/receipt-save";
 
-async function ensureInboxToken(userId: string, rotate = false): Promise<{
-  token: string;
-  lastInboxAt: Date | null;
-  notice: string | null;
-}> {
+async function ensureSettings(userId: string, rotate = false) {
   const existing = await prisma.userSettings.findUnique({ where: { userId } });
-  if (existing?.inboxToken && !rotate) {
-    return { token: existing.inboxToken, lastInboxAt: existing.lastInboxAt, notice: existing.inboxNotice };
-  }
+  if (existing?.inboxToken && !rotate) return existing;
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const token = newInboxToken();
     try {
-      const row = await prisma.userSettings.upsert({
+      return await prisma.userSettings.upsert({
         where: { userId },
         create: { userId, inboxToken: token },
-        update: { inboxToken: token },
+        update: {
+          inboxToken: token,
+          confirmCode: null,
+          confirmLink: null,
+          confirmReceivedAt: null,
+          forwardingAckedAt: null,
+          inboxNotice: null,
+        },
       });
-      return { token: row.inboxToken ?? token, lastInboxAt: row.lastInboxAt, notice: row.inboxNotice };
     } catch {
-      /* unique collision — try again */
+      /* unique collision */
     }
   }
   throw new Error("Could not allocate an inbox");
 }
 
-async function inboxPayload(
-  userId: string,
-  token: string,
-  lastInboxAt: Date | null,
-  notice: string | null,
-) {
-  const rows = await prisma.billLine.findMany({ where: { userId, includedInTotal: true } });
-  const waiting = waitingSeats(rows.map(toLine));
+async function inboxPayload(userId: string, row: Awaited<ReturnType<typeof ensureSettings>>) {
+  const lines = await prisma.billLine.findMany({ where: { userId, includedInTotal: true } });
+  const status = inboxStatus(row);
   return {
-    address: inboxAddress(token),
-    lastInboxAt: lastInboxAt?.toISOString() ?? null,
-    notice,
-    filter: gmailFilterQuery(),
-    waiting,
-    setup: [
-      "Copy the address.",
-      "Set it as the billing email on Cursor, Claude, and ChatGPT.",
-    ],
+    address: inboxAddress(row.inboxToken ?? ""),
+    status,
+    confirm:
+      row.confirmReceivedAt && (row.confirmCode || row.confirmLink)
+        ? {
+            code: row.confirmCode,
+            link: row.confirmLink,
+            receivedAt: row.confirmReceivedAt.toISOString(),
+          }
+        : row.confirmReceivedAt
+          ? { code: null, link: null, receivedAt: row.confirmReceivedAt.toISOString() }
+          : null,
+    lastReceiptAt: row.lastReceiptAt?.toISOString() ?? null,
+    lastInboxAt: row.lastReceiptAt?.toISOString() ?? row.lastInboxAt?.toISOString() ?? null,
+    waiting: waitingSeats(lines.map(toLine)),
+    seats: BILLING_SEATS.map((seat) => ({ id: seat.id, name: seat.name, from: seat.from, contains: seat.contains })),
   };
 }
 
 export async function GET() {
   const user = await requireUser();
   if ("error" in user) return user.error;
-  const { token, lastInboxAt, notice } = await ensureInboxToken(user.userId);
-  return NextResponse.json(await inboxPayload(user.userId, token, lastInboxAt, notice));
+  const row = await ensureSettings(user.userId);
+  return NextResponse.json(await inboxPayload(user.userId, row));
 }
 
-export async function PATCH() {
+export async function PATCH(request: Request) {
   const user = await requireUser();
   if ("error" in user) return user.error;
-  const { token, lastInboxAt, notice } = await ensureInboxToken(user.userId, true);
-  return NextResponse.json(await inboxPayload(user.userId, token, lastInboxAt, notice));
+  let ack = false;
+  try {
+    const body = (await request.json()) as { ack?: boolean };
+    ack = body.ack === true;
+  } catch {
+    ack = false;
+  }
+  if (ack) {
+    const existing = await prisma.userSettings.findUnique({ where: { userId: user.userId } });
+    if (!existing?.confirmReceivedAt || (!existing.confirmCode && !existing.confirmLink)) {
+      return NextResponse.json({ error: "Nothing to confirm" }, { status: 400 });
+    }
+    const row = await prisma.userSettings.update({
+      where: { userId: user.userId },
+      data: { forwardingAckedAt: new Date() },
+    });
+    return NextResponse.json(await inboxPayload(user.userId, row));
+  }
+  const row = await ensureSettings(user.userId, true);
+  return NextResponse.json(await inboxPayload(user.userId, row));
 }
 
 export async function POST(request: Request) {
@@ -99,7 +120,12 @@ export async function POST(request: Request) {
     ].filter(Boolean);
     await prisma.userSettings.update({
       where: { userId: settings.userId },
-      data: { inboxNotice: bits.join("\n"), lastInboxAt: new Date() },
+      data: {
+        confirmCode: confirm.code,
+        confirmLink: confirm.link,
+        confirmReceivedAt: new Date(),
+        inboxNotice: bits.join("\n"),
+      },
     });
     return NextResponse.json({ verify: true });
   }
@@ -121,7 +147,7 @@ export async function POST(request: Request) {
   await prisma.inboxEvent.create({ data: { userId: settings.userId, messageKey } });
   await prisma.userSettings.update({
     where: { userId: settings.userId },
-    data: { lastInboxAt: new Date() },
+    data: { lastInboxAt: new Date(), lastReceiptAt: new Date() },
   });
   return NextResponse.json({ lines: saved, saved: true });
 }

@@ -30,8 +30,10 @@ Done in Vercel (do not redo): Neon `aibill-db`, `INBOX_DOMAIN=inbox.1024ideas.co
    Forward the same email again: total must not double.
 
 5. **Your own Gmail (once)**  
-   Settings → Filters → the query on the bill page → Forward to your AI Bill address.  
-   Or set that address as the billing email on Cursor / Claude / ChatGPT / Windsurf.
+   Settings → **Forwarding and POP/IMAP** (`#settings/fwdandpop`) → add the AI Bill address.  
+   Google’s confirmation mail goes to that address, **not** your Gmail. Confirm the code/link on `/app`, then click “I confirmed in Gmail.”  
+   Only after that: Settings → Filters → From `stripe.com`, Has the words `Cursor` → next screen only **Forward it to**. Do not apply to matching conversations.  
+   Cursor has no billing-email box. Do not teach users to change email on Stripe’s customer portal.
 
 ## Already done in the app (do not rebuild)
 

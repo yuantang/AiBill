@@ -122,9 +122,14 @@ model UserSettings {
   theme          String  @default("light")
   cycleStartDay  Int     @default(1)
   locale         String  @default("en")
-  inboxToken     String?  @unique
-  lastInboxAt    DateTime?
-  inboxNotice    String?
+  inboxToken         String?  @unique
+  lastInboxAt        DateTime?
+  inboxNotice        String?
+  confirmCode        String?
+  confirmLink        String?
+  confirmReceivedAt  DateTime?
+  forwardingAckedAt  DateTime?
+  lastReceiptAt      DateTime?
   updatedAt      DateTime @updatedAt
 }
 

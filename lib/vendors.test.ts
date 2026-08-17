@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BILLING_SEATS } from "./vendors";
+import { BILLING_SEATS, GMAIL_FILTERS_URL, GMAIL_FORWARDING_URL } from "./vendors";
 
 describe("BILLING_SEATS", () => {
   it("opens the three watched seats on https billing pages", () => {
@@ -9,5 +9,11 @@ describe("BILLING_SEATS", () => {
     for (const seat of BILLING_SEATS) {
       expect(seat.href.startsWith("https://")).toBe(true);
     }
+  });
+
+  it("sends unverified users to Forwarding, not Filters", () => {
+    expect(GMAIL_FORWARDING_URL).toContain("#settings/fwdandpop");
+    expect(GMAIL_FORWARDING_URL).not.toContain("filters");
+    expect(GMAIL_FILTERS_URL).toContain("#settings/filters");
   });
 });

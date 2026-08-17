@@ -1,3 +1,4 @@
+export const GMAIL_FORWARDING_URL = "https://mail.google.com/mail/u/0/#settings/fwdandpop";
 export const GMAIL_FILTERS_URL = "https://mail.google.com/mail/u/0/#settings/filters";
 
 export const BILLING_SEATS = [

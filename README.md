@@ -42,7 +42,7 @@ The app already turns a Stripe receipt into a cash line. It cannot receive real 
    - `INBOX_DOMAIN` = `inbox.yourdomain.com` (must match the address we show users)
    - `INBOX_WEBHOOK_SECRET` = a long random string; send it as header `x-inbox-secret`  
      On Vercel this secret is required. Locally, inbound works without it so you can test.
-6. **Each user, once:** copy their address in the bill → Gmail filter (query is on the page) **or** set it as the billing email on Cursor / Claude / ChatGPT / Windsurf.
+6. **Each user, once:** copy their address → Gmail **Forwarding and POP/IMAP** → confirm Google’s mail on `/app` (it never arrives in their Gmail) → then one Cursor filter (From `stripe.com`, Has the words `Cursor`). Cursor has no billing-email field.
 7. **Smoke test:** signed-in → “Drop a test Windsurf receipt”. Then forward one real Stripe mail and confirm a `Forwarded` line.
 
 Not in this list: Stripe for AI Bill’s own $5, Gmail OAuth, Plaid. Those are separate.

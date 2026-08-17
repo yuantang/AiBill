@@ -217,6 +217,19 @@ export function inboundAllowed(mail: { from: string; text: string }): boolean {
   return senderAllowed(mail.text) && /receipt from|amount paid|invoice/i.test(mail.text);
 }
 
+export type InboxStatus = "unverified" | "confirm_received" | "filter_ready" | "first_receipt";
+
+export function inboxStatus(row: {
+  confirmReceivedAt?: Date | string | null;
+  forwardingAckedAt?: Date | string | null;
+  lastReceiptAt?: Date | string | null;
+}): InboxStatus {
+  if (row.lastReceiptAt) return "first_receipt";
+  if (row.forwardingAckedAt) return "filter_ready";
+  if (row.confirmReceivedAt) return "confirm_received";
+  return "unverified";
+}
+
 export function gmailFilterQuery(): string {
   return "from:(stripe.com OR invoice.stripe.com OR cursor.com OR anthropic.com OR openai.com OR mail.anthropic.com OR x.ai OR midjourney.com OR perplexity.ai) (subject:(receipt OR invoice OR payment OR charged) OR \"Amount paid\")";
 }
