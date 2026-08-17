@@ -46,6 +46,7 @@ export function BillApp() {
   const [windowRemain, setWindowRemain] = useState("");
   const [budgetInput, setBudgetInput] = useState("");
   const [showConnect, setShowConnect] = useState(false);
+  const [focusKeys, setFocusKeys] = useState(false);
   const [receiptText, setReceiptText] = useState("");
   const [isDemo, setIsDemo] = useState(false);
   const [previous, setPrevious] = useState<MonthSnapshot | null>(null);
@@ -93,9 +94,16 @@ export function BillApp() {
   }, []);
 
   useEffect(() => {
-    if (!showConnect) return;
+    if (!focusKeys || !showConnect) return;
     document.getElementById("keys")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [showConnect]);
+    document.getElementById("openai")?.focus();
+    setFocusKeys(false);
+  }, [focusKeys, showConnect]);
+
+  function openKeys() {
+    setShowConnect(true);
+    setFocusKeys(true);
+  }
 
   function applyDemo() {
     const sample = sampleBill(fx);
@@ -114,7 +122,7 @@ export function BillApp() {
       settings: { ...DEFAULT_SETTINGS, ...settings, budgetCny },
     });
     setIsDemo(false);
-    setShowConnect(true);
+    openKeys();
   }
 
   function addLine(next: Omit<Line, "id">, id = newId()) {
@@ -383,7 +391,7 @@ export function BillApp() {
       ) : (
         <p className="banner">
           {t("bill.needKey")}{" "}
-          <button type="button" className="link" onClick={() => setShowConnect(true)}>
+          <button type="button" className="link" onClick={openKeys}>
             {t("bill.pasteKey")}
           </button>
         </p>
@@ -409,6 +417,11 @@ export function BillApp() {
       <p className="lede">
         {t("bill.lede")}
       </p>
+      {error ? (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       <section className="hero">
         <div className="hero-grid">
@@ -623,6 +636,11 @@ export function BillApp() {
         <div className="panel" id="keys" style={{ marginTop: 12 }}>
           <h2>{t("bill.invoicesTitle")}</h2>
           <p className="hint">{t("bill.invoicesHint")}</p>
+          {error ? (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          ) : null}
           <div className="connect">
             <div className="field">
               <label htmlFor="openai">{t("bill.openaiKey")}</label>
@@ -944,11 +962,6 @@ export function BillApp() {
               </div>
             </details>
           </>
-        ) : null}
-        {error ? (
-          <p className="error" role="alert">
-            {error}
-          </p>
         ) : null}
       </section>}
     </main>
