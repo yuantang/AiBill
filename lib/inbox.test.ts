@@ -1,7 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { parseReceipts } from "./receipts";
 import { waitingSeats } from "./coverage";
-import { inboxAddress, inboundDedupeKey, mailFromObject, senderAllowed, tokenFromRecipient } from "./inbox";
+import {
+  inboxAddress,
+  inboundAuthorized,
+  inboundDedupeKey,
+  mailFromObject,
+  senderAllowed,
+  tokenFromRecipient,
+} from "./inbox";
 
 describe("inbox addressing", () => {
   it("reads the token out of a recipient, plus-address, or display name", () => {
@@ -92,5 +99,34 @@ describe("inbound payloads", () => {
       text: "Thanks for shopping at Costco. Total $86.12",
     });
     expect(parseReceipts(mail.text)).toEqual([]);
+  });
+});
+
+describe("inboundAuthorized", () => {
+  const prevSecret = process.env.INBOX_WEBHOOK_SECRET;
+  const prevVercel = process.env.VERCEL;
+
+  afterEach(() => {
+    if (prevSecret === undefined) delete process.env.INBOX_WEBHOOK_SECRET;
+    else process.env.INBOX_WEBHOOK_SECRET = prevSecret;
+    if (prevVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = prevVercel;
+  });
+
+  it("accepts the header, bearer token, or query secret on Vercel", () => {
+    process.env.VERCEL = "1";
+    process.env.INBOX_WEBHOOK_SECRET = "s3cret";
+    const url = "https://aibill.1024ideas.com/api/inbox";
+    expect(inboundAuthorized(new Request(url))).toBe(false);
+    expect(inboundAuthorized(new Request(url, { headers: { "x-inbox-secret": "s3cret" } }))).toBe(true);
+    expect(inboundAuthorized(new Request(url, { headers: { authorization: "Bearer s3cret" } }))).toBe(true);
+    expect(inboundAuthorized(new Request(`${url}?secret=s3cret`))).toBe(true);
+    expect(inboundAuthorized(new Request(`${url}?secret=nope`))).toBe(false);
+  });
+
+  it("fails closed on Vercel when the secret is missing", () => {
+    process.env.VERCEL = "1";
+    delete process.env.INBOX_WEBHOOK_SECRET;
+    expect(inboundAuthorized(new Request("https://aibill.1024ideas.com/api/inbox"))).toBe(false);
   });
 });

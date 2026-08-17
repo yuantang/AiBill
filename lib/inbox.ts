@@ -147,8 +147,20 @@ export function inboundAuthorized(request: Request): boolean {
   const secret = process.env.INBOX_WEBHOOK_SECRET?.trim();
   if (!secret) return !process.env.VERCEL;
   const header = request.headers.get("x-inbox-secret") ?? "";
-  if (header.length !== secret.length) return false;
-  return timingSafeEqualString(header, secret);
+  const auth = request.headers.get("authorization") ?? "";
+  const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
+  let query = "";
+  try {
+    query = new URL(request.url).searchParams.get("secret") ?? "";
+  } catch {
+    query = "";
+  }
+  return [header, bearer, query].some((candidate) => secretsEqual(candidate, secret));
+}
+
+function secretsEqual(candidate: string, secret: string): boolean {
+  if (!candidate || candidate.length !== secret.length) return false;
+  return timingSafeEqualString(candidate, secret);
 }
 
 function timingSafeEqualString(a: string, b: string): boolean {
