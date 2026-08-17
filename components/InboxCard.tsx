@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sampleInboundLines } from "@/lib/inbox-sample";
 import type { Line } from "@/lib/types";
-import { BILLING_SEATS } from "@/lib/vendors";
+import { BILLING_SEATS, GMAIL_FILTERS_URL } from "@/lib/vendors";
 import { useI18n } from "./I18nProvider";
 
 type InboxInfo = {
@@ -22,7 +22,7 @@ export function InboxCard({
 }) {
   const { t } = useI18n();
   const [info, setInfo] = useState<InboxInfo | null>(null);
-  const [copied, setCopied] = useState<"addr" | "filter" | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [noteKind, setNoteKind] = useState<"ok" | "err" | null>(null);
@@ -50,7 +50,7 @@ export function InboxCard({
     };
   }, [mode, t]);
 
-  async function copy(kind: "addr" | "filter", value: string) {
+  async function copy(kind: string, value: string) {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(kind);
@@ -149,46 +149,88 @@ export function InboxCard({
       <p className="lede" style={{ marginTop: 0 }}>
         {t("inbox.oneStep")}
       </p>
-      <div className="inbox-addr">
-        <code>{info.address}</code>
-        <button type="button" className="btn" onClick={() => void copy("addr", info.address)}>
-          {copied === "addr" ? t("inbox.copied") : t("inbox.copy")}
-        </button>
-      </div>
-      <p className="hint">{t("inbox.vendorHint")}</p>
-      <div className="vendor-row" role="group" aria-label={t("inbox.vendorHint")}>
-        {BILLING_SEATS.map((seat) => (
-          <a
-            key={seat.id}
-            className="btn secondary"
-            href={seat.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => {
-              void copy("addr", info.address);
-              setNoteKind("ok");
-              setNote(t(`inbox.how.${seat.how}`));
-            }}
-          >
-            {t("inbox.openVendor", { name: seat.name })}
+      <ol className="setup-ol">
+        <li>
+          <strong>{t("inbox.guide.copy")}</strong>
+          <div className="inbox-addr">
+            <code>{info.address}</code>
+            <button type="button" className="btn" onClick={() => void copy("addr", info.address)}>
+              {copied === "addr" ? t("inbox.copied") : t("inbox.copy")}
+            </button>
+          </div>
+        </li>
+        <li>
+          <strong>{t("inbox.guide.gmail")}</strong>
+          <p className="hint">{t("inbox.guide.gmailWhy")}</p>
+          <a className="btn" href={GMAIL_FILTERS_URL} target="_blank" rel="noopener noreferrer">
+            {t("inbox.guide.openGmail")}
           </a>
-        ))}
-      </div>
-      {info.lastInboxAt ? (
-        <p className="ok" role="status">
-          {t("inbox.lastAt", { date: new Date(info.lastInboxAt).toLocaleString() })}
-        </p>
-      ) : (
-        <p className="hint">{t("inbox.waiting")}</p>
-      )}
-      {info.waiting && info.waiting.length > 0 ? (
-        <p className="hint">{t("inbox.stillWaiting", { names: info.waiting.join(", ") })}</p>
-      ) : (
-        <p className="hint">{t("inbox.seatsIn")}</p>
-      )}
+        </li>
+        <li>
+          <strong>{t("inbox.guide.fill")}</strong>
+          <p className="hint">{t("inbox.guide.fillHint")}</p>
+          {BILLING_SEATS.map((seat, index) => (
+            <details key={seat.id} className="setup-card" open={index === 0}>
+              <summary>
+                {index + 1}. {seat.name}
+              </summary>
+              <table className="setup-table">
+                <tbody>
+                  <tr>
+                    <th>{t("inbox.guide.from")}</th>
+                    <td>
+                      <code>{seat.from}</code>
+                      <button type="button" className="link" onClick={() => void copy(`from-${seat.id}`, seat.from)}>
+                        {copied === `from-${seat.id}` ? t("inbox.copied") : t("inbox.copy")}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>{t("inbox.guide.contains")}</th>
+                    <td>
+                      <code>{seat.contains}</code>
+                      <button type="button" className="link" onClick={() => void copy(`has-${seat.id}`, seat.contains)}>
+                        {copied === `has-${seat.id}` ? t("inbox.copied") : t("inbox.copy")}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>{t("inbox.guide.leave")}</th>
+                    <td>{t("inbox.guide.leaveVal")}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="hint">{t("inbox.guide.next")}</p>
+              <div className="inbox-addr">
+                <code>{info.address}</code>
+                <button type="button" className="link" onClick={() => void copy("addr", info.address)}>
+                  {copied === "addr" ? t("inbox.copied") : t("inbox.copy")}
+                </button>
+              </div>
+            </details>
+          ))}
+        </li>
+        <li>
+          <strong>{t("inbox.guide.wait")}</strong>
+          <p className="hint">
+            {info.lastInboxAt
+              ? t("inbox.lastAt", { date: new Date(info.lastInboxAt).toLocaleString() })
+              : info.waiting && info.waiting.length > 0
+                ? t("inbox.stillWaiting", { names: info.waiting.join(", ") })
+                : t("inbox.waiting")}
+          </p>
+        </li>
+      </ol>
       <details className="inbox-more">
         <summary>{t("inbox.more")}</summary>
         <p className="hint">{t("inbox.moreFilter")}</p>
+        <div className="vendor-row">
+          {BILLING_SEATS.map((seat) => (
+            <a key={seat.id} className="btn secondary" href={seat.href} target="_blank" rel="noopener noreferrer">
+              {t("inbox.openVendor", { name: seat.name })}
+            </a>
+          ))}
+        </div>
         <div className="inbox-filter">
           <code>{info.filter}</code>
           <button type="button" className="link" onClick={() => void copy("filter", info.filter)}>

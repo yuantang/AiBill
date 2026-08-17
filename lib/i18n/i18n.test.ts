@@ -12,7 +12,8 @@ describe("i18n", () => {
     expect(t("zh", "bill.title")).toBe("你真正付出去的");
     expect(t("en", "bill.sendNumber")).toBe("Send this number");
     expect(t("zh", "bill.invoicesTitle")).toContain("发票");
-    expect(t("zh", "inbox.oneStep")).toContain("账单邮箱");
+    expect(t("zh", "inbox.guide.from")).toBe("发件人");
+    expect(t("zh", "inbox.guide.contains")).toBe("包含字词");
     expect(t("en", "inbox.openVendor", { name: "Cursor" })).toBe("Open Cursor billing");
     expect(t("zh", "inbox.how.cursor")).toContain("Manage Subscription");
   });
