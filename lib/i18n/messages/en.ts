@@ -211,7 +211,7 @@ export const en = {
     sending: "Sending…",
     needEmail: "Enter an email that can receive mail",
     sendFail: "Could not send the link. Check the address and try again.",
-    sent: "If that inbox is real, a sign-in link is on the way. Without Resend, look in the dev server terminal.",
+    sent: "A sign-in link is on the way. Check AI Bill <noreply@1024ideas.com>, and spam. The link lasts 24 hours.",
   },
   bill: {
     opening: "Opening the bill…",
@@ -221,7 +221,7 @@ export const en = {
     refreshing: "refreshing invoices…",
     lastPulled: "invoices pulled {date}",
     nightlyOn: "invoices refresh overnight",
-    needKey: "Paste a read-only Admin Key. That is the paid loop — we pull the invoice so you stop opening the console.",
+    needKey: "Claude, Cursor, and ChatGPT come through the forward inbox. A read-only Admin Key is only for OpenAI or Anthropic API invoices.",
     pasteKey: "Add a key",
     sendNumber: "Send this number",
     kicker: "This month · {month}",
