@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { parseReceipts } from "./receipts";
 import { waitingSeats } from "./coverage";
 import {
   gmailForwardConfirm,
   hydrateResendReceived,
   inboxAddress,
+  inboxHosts,
   inboxStatus,
   inboundAllowed,
   inboundAuthorized,
@@ -13,6 +14,13 @@ import {
   senderAllowed,
   tokenFromRecipient,
 } from "./inbox";
+
+const prevInboxDomain = process.env.INBOX_DOMAIN;
+process.env.INBOX_DOMAIN = "inbox.aibill.dev";
+afterAll(() => {
+  if (prevInboxDomain === undefined) delete process.env.INBOX_DOMAIN;
+  else process.env.INBOX_DOMAIN = prevInboxDomain;
+});
 
 describe("inbox addressing", () => {
   it("reads the token out of a recipient, plus-address, or display name", () => {
@@ -23,6 +31,9 @@ describe("inbox addressing", () => {
     expect(tokenFromRecipient("receipts@stripe.com, ab12cd34ef@inbox.aibill.dev")).toBe("ab12cd34ef");
     expect(tokenFromRecipient("ab12cd34ef@evil.example")).toBeNull();
     expect(tokenFromRecipient("nobody")).toBeNull();
+    expect(tokenFromRecipient("ab12cd34ef@aibill.dev")).toBe("ab12cd34ef");
+    expect(tokenFromRecipient("ab12cd34ef@inbox.1024ideas.com", "1024ideas.com")).toBe("ab12cd34ef");
+    expect(inboxHosts("1024ideas.com")).toEqual(["1024ideas.com", "inbox.1024ideas.com"]);
   });
 
   it("lists seats that have not landed as cash", () => {

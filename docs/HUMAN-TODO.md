@@ -4,17 +4,20 @@ The app already turns a Stripe receipt into a cash line and tells you which numb
 
 ## This week (you)
 
-Done in Vercel (do not redo): Neon `aibill-db`, `INBOX_DOMAIN=inbox.1024ideas.com`, `INBOX_WEBHOOK_SECRET`, `EMAIL_FROM=AI Bill <noreply@1024ideas.com>`, Resend resource `aibill-mail` (free, still **Onboarding** until DNS verifies).
+Done in Vercel (do not redo): Neon `aibill-db`, `INBOX_DOMAIN=1024ideas.com`, `INBOX_WEBHOOK_SECRET`, `EMAIL_FROM=AI Bill <noreply@1024ideas.com>`, Resend sending on `1024ideas.com` (DKIM/SPF verified). Webhook `email.received` → `/api/inbox`. Free plan is **one** Resend domain, so receiving cannot live on a second host.
 
-1. **Verify sending domain** (Namecheap DNS for `1024ideas.com`)  
-   Open the Resend resource (Vercel → Storage → `aibill-mail`, or the SSO link from `vercel integration open resend aibill-mail`).  
-   Add the DKIM / SPF / MX records Resend shows. Do **not** replace the root MX if you already receive mail at `@1024ideas.com` — only add the records Resend lists (usually on `send` / `_domainkey`).  
-   Wait until the resource status is Available.
+1. **Verify sending domain** — done. DKIM + `send` SPF/MX are verified.
 
-2. **Inbound MX**  
-   Keep receiving on the subdomain only:  
-   `inbox.1024ideas.com` → provider inbound MX (Resend receiving MX from that same dashboard, or Mailgun inbound if you prefer).  
-   Do not point the root domain MX here.
+2. **Inbound MX (blocking)**  
+   Resend receiving is enabled on the **apex** `1024ideas.com`, not `inbox.1024ideas.com`. A probe to `token@inbox.1024ideas.com` was accepted by SES and never appeared in Resend Receiving.  
+   Namecheap → Domain → Advanced DNS → Mail Settings = Custom MX. Add **one** record:
+
+   | Type | Host | Value | Priority |
+   |------|------|-------|----------|
+   | MX | `@` | `inbound-smtp.us-east-1.amazonaws.com` | 10 |
+
+   Root MX is currently empty, so this does not steal an existing mailbox.  
+   Then wait until the Receiving row in Resend is **verified**. Addresses become `token@1024ideas.com`.
 
 3. **Webhook**  
    Route inbound mail to  

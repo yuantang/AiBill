@@ -4,6 +4,15 @@ export function inboxDomain(): string {
   return (process.env.INBOX_DOMAIN ?? "inbox.aibill.dev").trim().toLowerCase() || "inbox.aibill.dev";
 }
 
+/** Primary host plus the inbox. sibling, so a pending apex-MX cutover still matches. */
+export function inboxHosts(domain = inboxDomain()): string[] {
+  const primary = domain.trim().toLowerCase();
+  const hosts = new Set<string>([primary]);
+  if (primary.startsWith("inbox.")) hosts.add(primary.slice("inbox.".length));
+  else if (primary.includes(".")) hosts.add(`inbox.${primary}`);
+  return [...hosts];
+}
+
 export function newInboxToken(): string {
   return randomBytes(9).toString("base64url").replace(/[^a-zA-Z0-9]/g, "x").toLowerCase();
 }
@@ -23,7 +32,7 @@ export function tokenFromRecipient(recipient: string, domain = inboxDomain()): s
     const at = addr.lastIndexOf("@");
     if (at < 0) continue;
     const host = addr.slice(at + 1);
-    if (host !== domain) continue;
+    if (!inboxHosts(domain).includes(host)) continue;
     const local = addr.slice(0, at);
     const plus = local.includes("+") ? local.slice(local.lastIndexOf("+") + 1) : local;
     const token = plus.replace(/[^a-z0-9]/g, "");
