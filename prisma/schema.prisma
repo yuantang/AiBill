@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  accounts      Account[]
+  sessions      Session[]
+  lines         BillLine[]
+  window        QuotaWindow?
+  keys          ProviderKey[]
+  settings      UserSettings?
+  snapshots     MonthSnapshot[]
+  shares        ShareLink[]
+  inboxEvents   InboxEvent[]
+}
+
+model InboxEvent {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messageKey String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, messageKey])
+  @@index([userId])
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model BillLine {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  kind            String
+  amountCny       Float
+  amountUsd       Float?
+  fxRate          Float?
+  fxDate          String?
+  source          String
+  includedInTotal Boolean
+  chargeDay       Int?
+  note            String?
+  dailyUsd        String?
+  category        String  @default("work")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model QuotaWindow {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  percent   Float?
+  remaining String?
+  endsAt    String?
+  source    String
+  updatedAt DateTime @updatedAt
+}
+
+model ProviderKey {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider   String
+  ciphertext String
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, provider])
+}
+
+model UserSettings {
+  userId        String  @id
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budgetCny     Float?
+  emailEnabled   Boolean @default(true)
+  plan           String  @default("free")
+  theme          String  @default("light")
+  cycleStartDay  Int     @default(1)
+  locale         String  @default("en")
+  inboxToken     String?  @unique
+  lastInboxAt    DateTime?
+  updatedAt      DateTime @updatedAt
+}
+
+model MonthSnapshot {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month           String
+  totalCny        Float
+  subscriptionCny Float
+  apiCny          Float
+  otherCny        Float
+  statement       String
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, month])
+  @@index([userId])
+}
+
+model ShareLink {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  month      String
+  totalCny   Float
+  statement  String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+}

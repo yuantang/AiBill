@@ -1,0 +1,171 @@
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
+
+export function inboxDomain(): string {
+  return (process.env.INBOX_DOMAIN ?? "inbox.aibill.dev").trim().toLowerCase() || "inbox.aibill.dev";
+}
+
+export function newInboxToken(): string {
+  return randomBytes(9).toString("base64url").replace(/[^a-zA-Z0-9]/g, "x").toLowerCase();
+}
+
+export function inboxAddress(token: string): string {
+  return `${token}@${inboxDomain()}`;
+}
+
+export function tokenFromRecipient(recipient: string, domain = inboxDomain()): string | null {
+  const parts = recipient
+    .split(/[,;]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  for (const part of parts) {
+    const angle = part.match(/<([^>]+)>/);
+    const addr = (angle?.[1] ?? part).trim().toLowerCase();
+    const at = addr.lastIndexOf("@");
+    if (at < 0) continue;
+    const host = addr.slice(at + 1);
+    if (host !== domain) continue;
+    const local = addr.slice(0, at);
+    const plus = local.includes("+") ? local.slice(local.lastIndexOf("+") + 1) : local;
+    const token = plus.replace(/[^a-z0-9]/g, "");
+    if (token.length >= 8 && token.length <= 32) return token;
+  }
+  return null;
+}
+
+export type InboundMail = {
+  token: string | null;
+  recipient: string;
+  from: string;
+  subject: string;
+  text: string;
+  messageId: string;
+};
+
+function asString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  return String(value);
+}
+
+function unwrapWebhook(body: Record<string, unknown>): Record<string, unknown> {
+  const data = body.data;
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    return { ...body, ...(data as Record<string, unknown>) };
+  }
+  const email = body.email;
+  if (email && typeof email === "object" && !Array.isArray(email)) {
+    return { ...body, ...(email as Record<string, unknown>) };
+  }
+  return body;
+}
+
+function collectAddresses(value: unknown, into: string[]): void {
+  if (typeof value === "string") {
+    into.push(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectAddresses(item, into);
+    return;
+  }
+  if (value && typeof value === "object") {
+    const rec = value as Record<string, unknown>;
+    const email = rec.email ?? rec.address ?? rec.value;
+    if (typeof email === "string") into.push(email);
+  }
+}
+
+function allAddresses(value: unknown): string {
+  const found: string[] = [];
+  collectAddresses(value, found);
+  return found.join(", ");
+}
+
+export function mailFromObject(raw: Record<string, unknown>): InboundMail {
+  const body = unwrapWebhook(raw);
+  const recipient = allAddresses(
+    body.recipient ?? body.to ?? body.To ?? body.envelope_to ?? body["envelope-to"],
+  );
+  const from = allAddresses(body.from ?? body.From ?? body.sender ?? body.Sender);
+  const subject = asString(body.subject ?? body.Subject);
+  const plain = [
+    asString(body["stripped-text"]),
+    asString(body["body-plain"]),
+    asString(body.TextBody),
+    asString(body.text),
+    asString(body.body),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const html = asString(body["body-html"] ?? body.HtmlBody ?? body.html);
+  const text = plain || html;
+  const messageId = asString(
+    body["Message-Id"] ?? body["Message-ID"] ?? body["message-id"] ?? body.MessageID ?? body.message_id,
+  );
+  return {
+    recipient,
+    from,
+    subject,
+    text: [subject, from, text].filter(Boolean).join("\n"),
+    token: tokenFromRecipient(recipient),
+    messageId: messageId.trim(),
+  };
+}
+
+export function inboundDedupeKey(mail: InboundMail): string {
+  const id = mail.messageId.replace(/^<|>$/g, "").trim().toLowerCase();
+  if (id.length >= 8) return id.slice(0, 200);
+  return createHash("sha256")
+    .update(`${mail.token ?? ""}|${mail.from}|${mail.subject}|${mail.text.slice(0, 400)}`)
+    .digest("hex");
+}
+
+export async function parseInboundRequest(request: Request): Promise<InboundMail> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const json = (await request.json()) as Record<string, unknown>;
+    return mailFromObject(json ?? {});
+  }
+  if (contentType.includes("form")) {
+    const form = await request.formData();
+    const obj: Record<string, unknown> = {};
+    for (const [key, value] of form.entries()) {
+      if (typeof value === "string") obj[key] = value;
+    }
+    return mailFromObject(obj);
+  }
+  const text = await request.text();
+  if (!text.trim()) return mailFromObject({});
+  try {
+    return mailFromObject(JSON.parse(text) as Record<string, unknown>);
+  } catch {
+    return mailFromObject({ text });
+  }
+}
+
+export function inboundAuthorized(request: Request): boolean {
+  const secret = process.env.INBOX_WEBHOOK_SECRET?.trim();
+  if (!secret) return !process.env.VERCEL;
+  const header = request.headers.get("x-inbox-secret") ?? "";
+  if (header.length !== secret.length) return false;
+  return timingSafeEqualString(header, secret);
+}
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+}
+
+const SENDER_OK =
+  /stripe\.com|cursor\.com|anthropic\.com|openai\.com|x\.ai|midjourney\.com|perplexity\.ai|github\.com|google\.com|groq\.com|openrouter\.ai|vercel\.com/i;
+
+export function senderAllowed(from: string): boolean {
+  return SENDER_OK.test(from);
+}
+
+export function gmailFilterQuery(): string {
+  return "from:(stripe.com OR invoice.stripe.com OR cursor.com OR anthropic.com OR openai.com OR mail.anthropic.com OR x.ai OR midjourney.com OR perplexity.ai) (subject:(receipt OR invoice OR payment OR charged) OR \"Amount paid\")";
+}
+
