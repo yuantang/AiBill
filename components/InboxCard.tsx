@@ -167,7 +167,7 @@ export function InboxCard({
             onClick={() => {
               void copy("addr", info.address);
               setNoteKind("ok");
-              setNote(t("inbox.copiedGo", { name: seat.name }));
+              setNote(t(`inbox.how.${seat.how}`));
             }}
           >
             {t("inbox.openVendor", { name: seat.name })}

@@ -178,9 +178,15 @@ export const zh = {
     hint: "这个地址只属于你。Cursor、Claude、ChatGPT 的 Stripe 收据寄到这里，就会变成现金行。我们只留商户、金额和日期——不存原信。",
     oneStep: "复制这个地址，在 Cursor、Claude、ChatGPT 里改成账单邮箱。下个月扣款自己进来。",
     oneStepGuest: "登录拿到一个专属地址。把它设成账单邮箱，就结束了。",
-    vendorHint: "会先复制地址，再打开账单页。把地址贴成 Billing email。",
-    openVendor: "去 {name} 设置",
+    vendorHint: "地址会先复制。打开后按按钮下面那一行说明找。",
+    openVendor: "打开 {name} 账单",
     copiedGo: "地址已复制。在 {name} 里贴成账单邮箱。",
+    how: {
+      cursor:
+        "地址已复制。Cursor 页面上没有「账单邮箱」这一栏。点 Billing → Manage Subscription，进 Stripe 后再找 Email / Invoice。找不到就用下面「其他办法」做 Gmail 过滤。",
+      claude: "地址已复制。Claude：Settings → Billing，找 billing / invoice email 贴进去。",
+      chatgpt: "地址已复制。ChatGPT：Settings → 账号 / 账单邮箱，贴进去。",
+    },
     more: "其他办法",
     moreFilter: "或者设一条 Gmail 过滤。或者转发一封收据。都是同一个地址。",
     signIn: "登录拿到一个专属地址。把它设成账单邮箱，就结束了。",

@@ -179,9 +179,15 @@ export const en = {
     hint: "This address is yours. Stripe receipts for Cursor, Claude, ChatGPT, Windsurf, Copilot, Midjourney, Perplexity land here and become cash lines. We keep merchant, amount, and date — not the raw email.",
     oneStep: "Copy this address. Set it as the billing email on Cursor, Claude, and ChatGPT. Next month the charges land here.",
     oneStepGuest: "Sign in to get one private address. Set it as the billing email — that is the whole setup.",
-    vendorHint: "Opens the billing page and copies the address. Paste it as the billing email.",
-    openVendor: "Set on {name}",
+    vendorHint: "Address is copied. Then follow the one-line instruction under the buttons.",
+    openVendor: "Open {name} billing",
     copiedGo: "Address copied. Paste it as the billing email on {name}.",
+    how: {
+      cursor:
+        "Address copied. On Cursor: Billing → Manage Subscription. In the Stripe page look for email / invoice settings. Cursor has no “billing email” box on the dashboard itself.",
+      claude: "Address copied. On Claude: Settings → Billing → look for billing / invoice email and paste.",
+      chatgpt: "Address copied. On ChatGPT: Settings → account / billing email and paste.",
+    },
     more: "Other ways",
     moreFilter: "Or one Gmail filter. Or forward a receipt once. Same address.",
     signIn: "Sign in to get one private address. Set it as the billing email — that is the whole setup.",
