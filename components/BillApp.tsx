@@ -92,6 +92,11 @@ export function BillApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!showConnect) return;
+    document.getElementById("keys")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [showConnect]);
+
   function applyDemo() {
     const sample = sampleBill(fx);
     bill.loadBundle({
@@ -614,6 +619,57 @@ export function BillApp() {
         </details>
       </section>
 
+      {showConnect ? (
+        <div className="panel" id="keys" style={{ marginTop: 12 }}>
+          <h2>{t("bill.invoicesTitle")}</h2>
+          <p className="hint">{t("bill.invoicesHint")}</p>
+          <div className="connect">
+            <div className="field">
+              <label htmlFor="openai">{t("bill.openaiKey")}</label>
+              <input
+                id="openai"
+                type="password"
+                autoComplete="off"
+                value={openaiKey}
+                onChange={(e) => setOpenaiKey(e.target.value)}
+                placeholder={bill.hasOpenai ? t("bill.keySaved") : t("bill.keyOpenaiPh")}
+              />
+            </div>
+            <button
+              type="button"
+              className="btn"
+              disabled={busy != null}
+              onClick={() => void pullCosts("openai")}
+            >
+              {busy === "openai" ? t("bill.fetching") : bill.hasOpenai ? t("bill.syncOpenai") : t("bill.pullOpenai")}
+            </button>
+            <div className="field">
+              <label htmlFor="anthropic">{t("bill.anthropicKey")}</label>
+              <input
+                id="anthropic"
+                type="password"
+                autoComplete="off"
+                value={anthropicKey}
+                onChange={(e) => setAnthropicKey(e.target.value)}
+                placeholder={bill.hasAnthropic ? t("bill.keySaved") : "sk-ant-admin…"}
+              />
+            </div>
+            <button
+              type="button"
+              className="btn"
+              disabled={busy != null}
+              onClick={() => void pullCosts("anthropic")}
+            >
+              {busy === "anthropic"
+                ? t("bill.fetching")
+                : bill.hasAnthropic
+                  ? t("bill.syncAnthropic")
+                  : t("bill.pullAnthropic")}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {alerts.length > 0 && !empty ? (
         <ul className="alerts">
           {alerts.map((alert) => (
@@ -859,55 +915,6 @@ export function BillApp() {
                   {t("bill.cancel")}
                 </button>
               ) : null}
-            </div>
-
-            <div className="panel" style={{ marginTop: 12 }}>
-              <h2>{t("bill.invoicesTitle")}</h2>
-              <p className="hint">{t("bill.invoicesHint")}</p>
-              <div className="connect">
-                <div className="field">
-                  <label htmlFor="openai">{t("bill.openaiKey")}</label>
-                  <input
-                    id="openai"
-                    type="password"
-                    autoComplete="off"
-                    value={openaiKey}
-                    onChange={(e) => setOpenaiKey(e.target.value)}
-                    placeholder={bill.hasOpenai ? t("bill.keySaved") : t("bill.keyOpenaiPh")}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={busy != null}
-                  onClick={() => void pullCosts("openai")}
-                >
-                  {busy === "openai" ? t("bill.fetching") : bill.hasOpenai ? t("bill.syncOpenai") : t("bill.pullOpenai")}
-                </button>
-                <div className="field">
-                  <label htmlFor="anthropic">{t("bill.anthropicKey")}</label>
-                  <input
-                    id="anthropic"
-                    type="password"
-                    autoComplete="off"
-                    value={anthropicKey}
-                    onChange={(e) => setAnthropicKey(e.target.value)}
-                    placeholder={bill.hasAnthropic ? t("bill.keySaved") : "sk-ant-admin…"}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="btn"
-                  disabled={busy != null}
-                  onClick={() => void pullCosts("anthropic")}
-                >
-                  {busy === "anthropic"
-                    ? t("bill.fetching")
-                    : bill.hasAnthropic
-                      ? t("bill.syncAnthropic")
-                      : t("bill.pullAnthropic")}
-                </button>
-              </div>
             </div>
 
             <details className="panel" style={{ marginTop: 12 }}>
