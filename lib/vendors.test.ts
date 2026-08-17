@@ -6,9 +6,6 @@ describe("BILLING_SEATS", () => {
     expect(BILLING_SEATS.map((seat) => seat.id)).toEqual(["cursor", "claude", "chatgpt"]);
     expect(BILLING_SEATS[0]?.from).toBe("stripe.com");
     expect(BILLING_SEATS[0]?.contains).toBe("Cursor");
-    for (const seat of BILLING_SEATS) {
-      expect(seat.href.startsWith("https://")).toBe(true);
-    }
   });
 
   it("sends unverified users to Forwarding, not Filters", () => {

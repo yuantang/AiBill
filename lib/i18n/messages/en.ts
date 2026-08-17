@@ -182,7 +182,7 @@ export const en = {
     rail: {
       unverifiedTitle: "Step 1 — Add a forwarding address",
       unverifiedBody:
-        "Cursor has no billing-email field. Open Gmail → Settings → Forwarding and POP/IMAP. Do not open Filters yet.",
+        "Open Gmail → Settings → Forwarding and POP/IMAP. Paste the address above. Do not open Filters yet.",
       openForwarding: "Open Gmail → Forwarding",
       addStep1: "Click Add a forwarding address.",
       addStep2: "Paste the address above. Next / Proceed.",
@@ -214,7 +214,7 @@ export const en = {
     guide: {
       copy: "Copy your AI Bill address",
       gmail: "Open Gmail filters",
-      gmailWhy: "Cursor has no billing-email field. Receipts already land in Gmail. A filter forwards them here.",
+      gmailWhy: "Receipts already land in Gmail. A filter forwards them here.",
       openGmail: "Open Gmail → Filters",
       fill: "Create one filter per tool. Only fill these two boxes",
       fillHint: "Leave To, Subject, Doesn’t have, Size, and Has attachment empty.",
@@ -224,17 +224,6 @@ export const en = {
       leaveVal: "Leave empty. Don’t check Has attachment.",
       next: "On the next screen: check only Forward it to, pick this address. Do not apply to matching conversations. Gmail offers that checkbox only after the address is verified on Forwarding.",
       wait: "Refresh this bill after the next Cursor / Claude / ChatGPT charge.",
-    },
-    vendorHint: "Address is copied. Then follow the one-line instruction under the buttons.",
-    openVendor: "Open {name} billing",
-    copiedGo: "Address copied. Add it in Gmail Forwarding first — not as a billing email on {name}.",
-    how: {
-      cursor:
-        "Cursor has no billing-email field. Stripe’s customer portal does not let you change email on the no-code login. Use Gmail Forwarding, then one filter.",
-      claude:
-        "Claude receipts follow the account email. First-run does not change that dashboard. Use Gmail Forwarding, then a filter with words = Claude.",
-      chatgpt:
-        "ChatGPT receipts follow the account email. First-run does not change that dashboard. Use Gmail Forwarding, then a filter with words = OpenAI.",
     },
     more: "Other ways",
     moreFilter: "Test mail or rotate this address. The Windsurf test does not count as a first real receipt.",
@@ -252,8 +241,6 @@ export const en = {
     waiting: "After the next Cursor charge, refresh this bill.",
     stillWaiting: "No receipt yet for {names}.",
     seatsIn: "Claude, Cursor, and ChatGPT are on this bill.",
-    stepFilter: "Gmail → Settings → Filters → create a filter with the query below → Forward it here.",
-    stepBilling: "Do not look for a billing-email box on Cursor. Forwarding first, then the filter.",
     stepDone: "Next month those charges appear on this bill. No paste.",
     test: "Drop a test Windsurf receipt",
     testing: "Sending test…",
@@ -554,7 +541,8 @@ export const en = {
     notSigned: "Not signed in · this browser only",
     planPro: "Plan: Pro",
     planFree: "Plan: Free",
-    signHint: ". Sign in if you want the bill to follow you.",
+    signHint: "Sign in if you want the bill to follow you.",
+    signedHint: "Signed in. The bill follows this account.",
     startPro: "Turn on preview Pro · not charged",
     budget: "Monthly budget",
     save: "Save",

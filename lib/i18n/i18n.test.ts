@@ -14,34 +14,26 @@ describe("i18n", () => {
     expect(t("zh", "bill.invoicesTitle")).toContain("发票");
     expect(t("zh", "inbox.guide.from")).toBe("发件人");
     expect(t("zh", "inbox.guide.contains")).toBe("包含字词");
-    expect(t("en", "inbox.openVendor", { name: "Cursor" })).toBe("Open Cursor billing");
     expect(t("en", "inbox.rail.unverifiedBody")).toContain("Forwarding");
     expect(t("zh", "inbox.rail.acked")).toBe("我已在 Gmail 里确认");
   });
 
-  it("never tells users to set a Cursor billing email", () => {
+  it("never tells users to set a vendor billing email", () => {
     const keys = [
       "landing.step2",
       "inbox.signIn",
-      "inbox.stepBilling",
-      "inbox.copiedGo",
-      "inbox.how.cursor",
-      "inbox.how.claude",
-      "inbox.how.chatgpt",
+      "inbox.rail.unverifiedBody",
+      "inbox.rail.forwardNow",
+      "inbox.guide.gmailWhy",
       "onboard.inboxHint",
     ] as const;
     for (const locale of ["en", "zh"] as const) {
       for (const key of keys) {
-        const text = t(locale, key, { name: "Cursor" }).toLowerCase();
-        expect(text).not.toMatch(/set it as the billing email/);
-        expect(text).not.toMatch(/paste it as the billing email/);
-        expect(text).not.toMatch(/把它设成账单邮箱/);
-        expect(text).not.toMatch(/改成账单邮箱/);
-        expect(text).not.toMatch(/贴成账单邮箱/);
+        const text = t(locale, key).toLowerCase();
+        expect(text).not.toMatch(/billing email/);
+        expect(text).not.toMatch(/账单邮箱/);
       }
     }
-    expect(t("en", "inbox.rail.unverifiedBody")).toMatch(/no billing-email field/i);
-    expect(t("zh", "inbox.rail.unverifiedBody")).toContain("没有账单邮箱栏");
   });
 
   it("empty-month and filter-set copy stay paste-first", () => {

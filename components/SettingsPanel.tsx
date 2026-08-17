@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { PRODUCT } from "@/lib/product";
 import { InboxCard } from "./InboxCard";
 import { LanguageSwitch, useI18n } from "./I18nProvider";
 import { useBill } from "./useBill";
@@ -30,11 +29,6 @@ export function SettingsPanel() {
   async function toggleEmail() {
     await bill.persistSettings({ ...bill.settings, emailEnabled: !bill.settings.emailEnabled });
     setMessage(bill.settings.emailEnabled ? t("settings.emailOff") : t("settings.emailOn"));
-  }
-
-  async function becomePro() {
-    await bill.persistSettings({ ...bill.settings, plan: "pro" });
-    setMessage(t("settings.proOn", { price: PRODUCT.priceUsd }));
   }
 
   async function dropKey(provider: "openai" | "anthropic") {
@@ -80,17 +74,7 @@ export function SettingsPanel() {
       <section className="section">
         <h2>{t("settings.account")}</h2>
         <p>{bill.email ?? t("settings.notSigned")}</p>
-        <p className="hint">
-          {bill.settings.plan === "pro" ? t("settings.planPro") : t("settings.planFree")}
-          {bill.mode === "local" ? t("settings.signHint") : ""}
-        </p>
-        {bill.mode === "cloud" && bill.settings.plan !== "pro" ? (
-          <div className="actions">
-            <button type="button" className="btn" onClick={() => void becomePro()}>
-              {t("settings.startPro", { price: PRODUCT.priceUsd })}
-            </button>
-          </div>
-        ) : null}
+        <p className="hint">{bill.mode === "local" ? t("settings.signHint") : t("settings.signedHint")}</p>
       </section>
 
       <section className="section">

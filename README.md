@@ -45,7 +45,7 @@ The app already turns a Stripe receipt into a cash line. It cannot receive real 
 6. **Each user, once:** copy their address (`token@INBOX_DOMAIN`) → Gmail **Forwarding and POP/IMAP** → confirm Google’s mail on `/app` (it never arrives in their Gmail) → then one Cursor filter (From `stripe.com`, Has the words `Cursor`). Cursor has no billing-email field. On the free Resend plan, receiving MX must sit on the same host as the verified domain (apex `1024ideas.com`), not a second inbox subdomain.
 7. **Smoke test:** signed-in → “Drop a test Windsurf receipt”. Then forward one real Stripe mail and confirm a `Forwarded` line.
 
-Not in this list: Stripe for AI Bill’s own $5, Gmail OAuth, Plaid. Those are separate.
+Not in the product: changing a vendor billing email, Gmail OAuth, Plaid. Stripe $5 is AI Bill’s own subscription, later.
 
 The same list, written for a person doing the work: [`docs/HUMAN-TODO.md`](docs/HUMAN-TODO.md).
 

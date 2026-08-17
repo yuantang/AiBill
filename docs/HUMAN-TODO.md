@@ -1,6 +1,6 @@
 # Human todo — operator of AI Bill
 
-Mail, DNS, and first-run Gmail are live. Do not rebuild them. Do not start Stripe or Gmail OAuth until a real forwarded receipt has moved the total.
+Mail, DNS, and first-run Gmail are live. Do not rebuild them. The product is Gmail forward + paste + two Admin Keys + a statement. Not in the product: vendor billing-email fields, Gmail OAuth, Plaid.
 
 ## Done (do not redo)
 
@@ -20,8 +20,6 @@ Optional: paste a read-only OpenAI / Anthropic Admin Key for the two invoices th
 
 Then open the statement and send the number if it matches the card.
 
-## Later (only after that receipt lands)
+## Later (business only)
 
-- Stripe Checkout for AI Bill itself ($5 / $48)
-- Gmail OAuth so new users skip the filter
-- Plaid / bank feed
+- Stripe Checkout for AI Bill itself ($5 / $48) — subscription, not a user cash path
