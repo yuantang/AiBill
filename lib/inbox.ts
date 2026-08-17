@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from "crypto";
+import { looksLikeReceipt } from "./receipts";
 
 export function inboxDomain(): string {
   return (process.env.INBOX_DOMAIN ?? "inbox.aibill.dev").trim().toLowerCase() || "inbox.aibill.dev";
@@ -210,10 +211,14 @@ export function senderAllowed(from: string): boolean {
 
 export function gmailForwardConfirm(text: string): { code: string | null; link: string | null } | null {
   const blob = text.trim();
-  if (!/forwarding-noreply@google\.com|gmail forwarding confirmation|confirmation code/i.test(blob)) {
+  if (
+    !/forwarding-noreply@google\.com|gmail forwarding confirmation|confirmation code|转发确认|确认代码/i.test(
+      blob,
+    )
+  ) {
     return null;
   }
-  const code = blob.match(/confirmation code[:\s#]+([0-9]{6,12})/i)?.[1] ?? null;
+  const code = blob.match(/(?:confirmation code|确认代码)[:\s#：]+([0-9]{6,12})/i)?.[1] ?? null;
   const link = blob.match(/https:\/\/mail(?:-settings)?\.google\.com\/[^\s"'<>]+/i)?.[0] ?? null;
   if (!code && !link) return { code: null, link: null };
   return { code, link };
@@ -224,6 +229,16 @@ export function inboundAllowed(mail: { from: string; text: string }): boolean {
   if (gmailForwardConfirm(`${mail.from}\n${mail.text}`)) return true;
   if (senderAllowed(mail.from)) return true;
   return senderAllowed(mail.text) && /receipt from|amount paid|invoice/i.test(mail.text);
+}
+
+export type InboundKind = "confirm" | "receipt" | "ignore";
+
+export function classifyInbound(mail: { from: string; subject?: string; text: string }): InboundKind {
+  const blob = `${mail.from}\n${mail.subject ?? ""}\n${mail.text}`;
+  if (gmailForwardConfirm(blob)) return "confirm";
+  if (!inboundAllowed(mail)) return "ignore";
+  if (!looksLikeReceipt(mail.text)) return "ignore";
+  return "receipt";
 }
 
 export type InboxStatus = "unverified" | "confirm_received" | "filter_ready" | "first_receipt";

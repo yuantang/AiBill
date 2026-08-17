@@ -3,10 +3,10 @@ import { requireUser } from "@/lib/current-user";
 import { prisma } from "@/lib/db";
 import { waitingSeats } from "@/lib/coverage";
 import {
+  classifyInbound,
   gmailForwardConfirm,
   inboxAddress,
   inboxStatus,
-  inboundAllowed,
   inboundAuthorized,
   inboundDedupeKey,
   newInboxToken,
@@ -14,7 +14,7 @@ import {
 } from "@/lib/inbox";
 import { BILLING_SEATS } from "@/lib/vendors";
 import { toLine } from "@/lib/lines";
-import { looksLikeReceipt, parseReceipts } from "@/lib/receipts";
+import { parseReceipts } from "@/lib/receipts";
 import { saveReceiptLines } from "@/lib/receipt-save";
 
 async function ensureSettings(userId: string, rotate = false) {
@@ -102,15 +102,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized inbound" }, { status: 401 });
   }
   const mail = await parseInboundRequest(request);
-  if (!mail.token || !inboundAllowed(mail)) {
+  if (!mail.token) {
+    return NextResponse.json({ ignored: true });
+  }
+  const kind = classifyInbound(mail);
+  if (kind === "ignore") {
     return NextResponse.json({ ignored: true });
   }
   const settings = await prisma.userSettings.findUnique({ where: { inboxToken: mail.token } });
   if (!settings) {
     return NextResponse.json({ ignored: true });
   }
-  const confirm = gmailForwardConfirm(`${mail.from}\n${mail.subject}\n${mail.text}`);
-  if (confirm) {
+  if (kind === "confirm") {
+    const confirm = gmailForwardConfirm(`${mail.from}\n${mail.subject}\n${mail.text}`) ?? {
+      code: null,
+      link: null,
+    };
     const bits = [
       confirm.code ? `Gmail confirmation code: ${confirm.code}` : null,
       confirm.link ? `Open this link to verify: ${confirm.link}` : null,
@@ -128,9 +135,6 @@ export async function POST(request: Request) {
       },
     });
     return NextResponse.json({ verify: true });
-  }
-  if (!looksLikeReceipt(mail.text)) {
-    return NextResponse.json({ ignored: true });
   }
   const messageKey = inboundDedupeKey(mail);
   const seen = await prisma.inboxEvent.findUnique({

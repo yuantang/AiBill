@@ -25,7 +25,7 @@ export function nextAction(lines: Line[], totalCny: number, locale: Locale = "en
           ? "这个月已经扣过的，在下面贴收据；或者等下一次转发进来。空合计发不出去。"
           : "Paste this month’s receipts below, or wait for the next forwarded charge. An empty total is not a number you can send.",
       href: "#inbox",
-      cta: locale === "zh" ? "去入账" : "Get charges in",
+      cta: locale === "zh" ? "转发或粘贴收据" : "Forward or paste a receipt",
     };
   }
 
