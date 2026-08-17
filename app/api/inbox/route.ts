@@ -4,12 +4,13 @@ import { prisma } from "@/lib/db";
 import { waitingSeats } from "@/lib/coverage";
 import {
   gmailFilterQuery,
+  gmailForwardConfirm,
   inboxAddress,
+  inboundAllowed,
   inboundAuthorized,
   inboundDedupeKey,
   newInboxToken,
   parseInboundRequest,
-  senderAllowed,
 } from "@/lib/inbox";
 import { toLine } from "@/lib/lines";
 import { looksLikeReceipt, parseReceipts } from "@/lib/receipts";
@@ -18,10 +19,11 @@ import { saveReceiptLines } from "@/lib/receipt-save";
 async function ensureInboxToken(userId: string, rotate = false): Promise<{
   token: string;
   lastInboxAt: Date | null;
+  notice: string | null;
 }> {
   const existing = await prisma.userSettings.findUnique({ where: { userId } });
   if (existing?.inboxToken && !rotate) {
-    return { token: existing.inboxToken, lastInboxAt: existing.lastInboxAt };
+    return { token: existing.inboxToken, lastInboxAt: existing.lastInboxAt, notice: existing.inboxNotice };
   }
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const token = newInboxToken();
@@ -31,7 +33,7 @@ async function ensureInboxToken(userId: string, rotate = false): Promise<{
         create: { userId, inboxToken: token },
         update: { inboxToken: token },
       });
-      return { token: row.inboxToken ?? token, lastInboxAt: row.lastInboxAt };
+      return { token: row.inboxToken ?? token, lastInboxAt: row.lastInboxAt, notice: row.inboxNotice };
     } catch {
       /* unique collision — try again */
     }
@@ -39,12 +41,18 @@ async function ensureInboxToken(userId: string, rotate = false): Promise<{
   throw new Error("Could not allocate an inbox");
 }
 
-async function inboxPayload(userId: string, token: string, lastInboxAt: Date | null) {
+async function inboxPayload(
+  userId: string,
+  token: string,
+  lastInboxAt: Date | null,
+  notice: string | null,
+) {
   const rows = await prisma.billLine.findMany({ where: { userId, includedInTotal: true } });
   const waiting = waitingSeats(rows.map(toLine));
   return {
     address: inboxAddress(token),
     lastInboxAt: lastInboxAt?.toISOString() ?? null,
+    notice,
     filter: gmailFilterQuery(),
     waiting,
     setup: [
@@ -57,15 +65,15 @@ async function inboxPayload(userId: string, token: string, lastInboxAt: Date | n
 export async function GET() {
   const user = await requireUser();
   if ("error" in user) return user.error;
-  const { token, lastInboxAt } = await ensureInboxToken(user.userId);
-  return NextResponse.json(await inboxPayload(user.userId, token, lastInboxAt));
+  const { token, lastInboxAt, notice } = await ensureInboxToken(user.userId);
+  return NextResponse.json(await inboxPayload(user.userId, token, lastInboxAt, notice));
 }
 
 export async function PATCH() {
   const user = await requireUser();
   if ("error" in user) return user.error;
-  const { token, lastInboxAt } = await ensureInboxToken(user.userId, true);
-  return NextResponse.json(await inboxPayload(user.userId, token, lastInboxAt));
+  const { token, lastInboxAt, notice } = await ensureInboxToken(user.userId, true);
+  return NextResponse.json(await inboxPayload(user.userId, token, lastInboxAt, notice));
 }
 
 export async function POST(request: Request) {
@@ -73,11 +81,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized inbound" }, { status: 401 });
   }
   const mail = await parseInboundRequest(request);
-  if (!mail.token || !senderAllowed(mail.from || mail.text) || !looksLikeReceipt(mail.text)) {
+  if (!mail.token || !inboundAllowed(mail)) {
     return NextResponse.json({ ignored: true });
   }
   const settings = await prisma.userSettings.findUnique({ where: { inboxToken: mail.token } });
   if (!settings) {
+    return NextResponse.json({ ignored: true });
+  }
+  const confirm = gmailForwardConfirm(`${mail.from}\n${mail.subject}\n${mail.text}`);
+  if (confirm) {
+    const bits = [
+      confirm.code ? `Gmail confirmation code: ${confirm.code}` : null,
+      confirm.link ? `Open this link to verify: ${confirm.link}` : null,
+      !confirm.code && !confirm.link
+        ? "Gmail sent a forwarding confirmation. Open the raw notice in Resend or ask support."
+        : null,
+    ].filter(Boolean);
+    await prisma.userSettings.update({
+      where: { userId: settings.userId },
+      data: { inboxNotice: bits.join("\n"), lastInboxAt: new Date() },
+    });
+    return NextResponse.json({ verify: true });
+  }
+  if (!looksLikeReceipt(mail.text)) {
     return NextResponse.json({ ignored: true });
   }
   const messageKey = inboundDedupeKey(mail);

@@ -208,6 +208,7 @@ export const en = {
     demoLand: "Watch three receipts land",
     demoOk: "Windsurf $15, Perplexity $20, and Copilot $10 landed as forwarded card charges.",
     loading: "Opening your inbox…",
+    verifyTitle: "Gmail needs this to finish forwarding:",
     loadFail: "Could not open the inbox. Sign in again and retry.",
     copy: "Copy address",
     copyFilter: "Copy filter",

@@ -11,6 +11,7 @@ type InboxInfo = {
   lastInboxAt: string | null;
   filter: string;
   waiting?: string[];
+  notice?: string | null;
 };
 
 export function InboxCard({
@@ -149,6 +150,11 @@ export function InboxCard({
       <p className="lede" style={{ marginTop: 0 }}>
         {t("inbox.oneStep")}
       </p>
+      {info.notice ? (
+        <p className="ok" role="status">
+          {t("inbox.verifyTitle")} {info.notice}
+        </p>
+      ) : null}
       <ol className="setup-ol">
         <li>
           <strong>{t("inbox.guide.copy")}</strong>

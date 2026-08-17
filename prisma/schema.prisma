@@ -124,6 +124,7 @@ model UserSettings {
   locale         String  @default("en")
   inboxToken     String?  @unique
   lastInboxAt    DateTime?
+  inboxNotice    String?
   updatedAt      DateTime @updatedAt
 }
 

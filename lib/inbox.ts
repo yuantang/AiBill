@@ -199,6 +199,24 @@ export function senderAllowed(from: string): boolean {
   return SENDER_OK.test(from);
 }
 
+export function gmailForwardConfirm(text: string): { code: string | null; link: string | null } | null {
+  const blob = text.trim();
+  if (!/forwarding-noreply@google\.com|gmail forwarding confirmation|confirmation code/i.test(blob)) {
+    return null;
+  }
+  const code = blob.match(/confirmation code[:\s#]+([0-9]{6,12})/i)?.[1] ?? null;
+  const link = blob.match(/https:\/\/mail(?:-settings)?\.google\.com\/[^\s"'<>]+/i)?.[0] ?? null;
+  if (!code && !link) return { code: null, link: null };
+  return { code, link };
+}
+
+/** Direct vendor mail, or a Gmail/Outlook forward that still contains the original receipt. */
+export function inboundAllowed(mail: { from: string; text: string }): boolean {
+  if (gmailForwardConfirm(`${mail.from}\n${mail.text}`)) return true;
+  if (senderAllowed(mail.from)) return true;
+  return senderAllowed(mail.text) && /receipt from|amount paid|invoice/i.test(mail.text);
+}
+
 export function gmailFilterQuery(): string {
   return "from:(stripe.com OR invoice.stripe.com OR cursor.com OR anthropic.com OR openai.com OR mail.anthropic.com OR x.ai OR midjourney.com OR perplexity.ai) (subject:(receipt OR invoice OR payment OR charged) OR \"Amount paid\")";
 }

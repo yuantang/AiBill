@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseReceipts } from "./receipts";
 import { waitingSeats } from "./coverage";
 import {
+  gmailForwardConfirm,
   hydrateResendReceived,
   inboxAddress,
+  inboundAllowed,
   inboundAuthorized,
   inboundDedupeKey,
   mailFromObject,
@@ -38,9 +40,31 @@ describe("inbox addressing", () => {
     ).toEqual(["Cursor", "ChatGPT"]);
   });
 
-  it("only trusts known bill senders", () => {
+  it("only trusts known bill senders on the From line", () => {
     expect(senderAllowed("Stripe <receipts@stripe.com>")).toBe(true);
     expect(senderAllowed("evil@gmail.com")).toBe(false);
+  });
+
+  it("accepts a Gmail filter-forward whose From is the user but the body is a Stripe receipt", () => {
+    expect(
+      inboundAllowed({
+        from: "me@gmail.com",
+        text: "Fwd: Receipt from Cursor\n-----Original Message-----\nFrom: Stripe <receipts@stripe.com>\nAmount paid $20.00",
+      }),
+    ).toBe(true);
+    expect(
+      inboundAllowed({
+        from: "me@gmail.com",
+        text: "lunch tomorrow at the cafe",
+      }),
+    ).toBe(false);
+  });
+
+  it("reads a Gmail forwarding confirmation code", () => {
+    const found = gmailForwardConfirm(
+      "From: forwarding-noreply@google.com\nGmail Forwarding Confirmation\nConfirmation code: 847291036",
+    );
+    expect(found?.code).toBe("847291036");
   });
 
   it("formats the public address", () => {

@@ -207,6 +207,7 @@ export const zh = {
     demoLand: "看三封收据自己进来",
     demoOk: "Windsurf $15、Perplexity $20、Copilot $10 已按转发入账。",
     loading: "正在打开你的邮箱…",
+    verifyTitle: "Gmail 要这段才能完成转发验证：",
     loadFail: "邮箱没打开。重新登录后再试。",
     copy: "复制地址",
     copyFilter: "复制过滤条件",
